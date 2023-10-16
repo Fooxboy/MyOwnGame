@@ -1,0 +1,141 @@
+﻿using System.Text.Json.Serialization;
+using MyOwnGame.Backend.Models;
+using MyOwnGame.Backend.Models.SiqPackage;
+
+namespace MyOwnGame.Backend.Domain;
+
+public class Session
+{
+    public List<Player> Players { get; } = new();
+    
+    public DateTime CreatedAt { get; }
+    
+    [JsonIgnore]
+    public Package Package { get; }
+
+    [JsonIgnore]
+    public bool AdminCanConnect => !Players.Any();
+    
+    public RoundInfo? CurrentRound { get; private set; }
+    
+    public GameInfo GameInfo { get; }
+    
+    public Player? RespondingPlayer { get; private set; }
+    
+    public SessionState State { get; private set; }
+    
+    [JsonIgnore]
+    public QuestionInfo? CurrentQuestion { get; private set; }
+
+    [JsonIgnore]
+    private readonly List<(Player, DateTime)> _playersReadyToAnswer = new();
+
+    [JsonIgnore] 
+    public DateTime? ReadyToAnswerTime { get; private set; }
+    
+    [JsonIgnore]
+    public string PackageHash { get; private set; }
+    
+    public Session(Package package)
+    {
+        CreatedAt = DateTime.UtcNow;
+        
+        Package = package;
+
+        State = SessionState.Created;
+
+        var themesName = (package.Rounds.Round.SelectMany(round => round.Themes.Theme, (round, theme) => theme.Name)).ToList();
+
+        GameInfo = new GameInfo
+        {
+            PackageName = package.Name, 
+            PackageCreatedAt = DateTime.Parse(package.Date),
+            Themes = themesName
+        };
+    }
+
+    public void SetPackageHash(string hash)
+    {
+        PackageHash = hash;
+    }
+
+    public void ChangeRound(int roundNumber)
+    {
+        var siqRound = Package.Rounds.Round[roundNumber];
+
+        var round = RoundInfo.Parse(siqRound);
+        round.Number = roundNumber;
+
+        CurrentRound = round;
+        
+        ResetRespondingPlayer();
+    }
+
+    public void AddPlayer(Player player)
+    {
+        Players.Add(player);
+    }
+
+    public void ChangeRespondingPlayer(Player player)
+    {
+        if (player is null)
+        {
+            throw new Exception("Не передали плеера лол");
+        }
+
+        if (!Players.Exists(p => p.ConnectionId == player.ConnectionId))
+        {
+            throw new Exception("Переданный отвечающий игрок не находится в этой сессии");
+        }
+
+        RespondingPlayer = player;
+    }
+
+    public void ResetRespondingPlayer()
+    {
+        RespondingPlayer = null;
+    }
+
+    public void ChangeStateToQuestion()
+    {
+        State = SessionState.Question;
+        
+        ReadyToAnswerTime = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+    }
+
+    public void ChangeStateToAnswer()
+    {
+        State = SessionState.Answer;
+
+        ReadyToAnswerTime = null;
+    }
+
+    public void ChangeStateToTable()
+    {
+        State = SessionState.Table;
+
+        ResetRespondingPlayer();
+    }
+
+    public void AddReadyToAnswerPlayer(Player player, DateTime time)
+    {
+        _playersReadyToAnswer.Add((player, time));
+    }
+
+    public void SelectRespondingPlayer()
+    {
+        var player = _playersReadyToAnswer.OrderBy(x => x.Item2).FirstOrDefault().Item1;
+
+        RespondingPlayer = player;
+    }
+
+    public void SelectCurrentQuestion(QuestionInfo questionInfo)
+    {
+        CurrentQuestion = questionInfo;
+    }
+
+    public void ResetCurrentQuestion()
+    {
+        CurrentQuestion = null;
+    }
+}
