@@ -47,6 +47,7 @@ namespace MyOwnGame.Backend
                     builder.AllowAnyOrigin()
                         .AllowAnyMethod()
                         .AllowAnyHeader();
+                    
                 });
             });
 
