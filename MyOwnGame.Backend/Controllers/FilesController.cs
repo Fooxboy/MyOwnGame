@@ -18,6 +18,11 @@ public class FilesController : Controller
     {
         var filePath = _filesService.GetAvatarPathByName(filename);
         
+        if (filePath is null)
+        {
+            NotFound(filename);
+        }
+        
         return File(System.IO.File.OpenRead(filePath), "image/jpeg");
     }
 
@@ -25,6 +30,11 @@ public class FilesController : Controller
     public async Task<IActionResult> GetContent(long sessionId, string filename)
     {
         var filePath = _filesService.GetSessionContent(sessionId, filename);
+
+        if (filePath is null)
+        {
+            NotFound(filename);
+        }
         
         new FileExtensionContentTypeProvider().TryGetContentType(filename, out string contentType);
         

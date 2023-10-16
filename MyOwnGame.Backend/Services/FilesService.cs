@@ -14,7 +14,7 @@ public class FilesService
         _sessionsManager = sessionsManager;
     }
 
-    public string GetAvatarPathByName(string fileName)
+    public string? GetAvatarPathByName(string fileName)
     {
         var avatarsPath = _configuration.GetValue<string>("avatarsPath");
 
@@ -22,13 +22,13 @@ public class FilesService
 
         if (!File.Exists(filePath))
         {
-            throw new Exception($"Файл '{filePath}' не существует ");
+            return null;
         }
         
         return filePath;
     }
 
-    public string GetSessionContent(long sessionId, string filename)
+    public string? GetSessionContent(long sessionId, string filename)
     {
         var session = _sessionsManager.GetSessionById(sessionId);
 
@@ -43,7 +43,7 @@ public class FilesService
         
         if (!File.Exists(sessionResourcesPath))
         {
-            throw new Exception($"Файл '{sessionResourcesPath}' не существует");
+            return null;
         }
 
 
