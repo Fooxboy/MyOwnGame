@@ -11,4 +11,6 @@ public enum QuestionContentType
     Image = 3,
     
     Video = 4,
+    
+    Say = 5
 }

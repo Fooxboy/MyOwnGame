@@ -8,7 +8,9 @@ public class StringToQuestionContentTypeMapper
     {
         { "image", QuestionContentType.Image },
         { "video", QuestionContentType.Video },
-        { "voice", QuestionContentType.Audio }
+        { "voice", QuestionContentType.Audio },
+        { "say", QuestionContentType.Say }
+
     };
     
     public static QuestionContentType Map(string type)

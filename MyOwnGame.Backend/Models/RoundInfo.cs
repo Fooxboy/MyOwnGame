@@ -18,7 +18,7 @@ public class RoundInfo
 
         round.Themes = new List<RoundTheme>();
 
-        foreach (var theme in roundSiq.Themes.Theme)
+        foreach (var theme in roundSiq.Themes.Theme.Where(x=> x.Questions != null))
         {
             var roundTheme = new RoundTheme();
 

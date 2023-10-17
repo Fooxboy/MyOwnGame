@@ -189,9 +189,6 @@ public class SessionService
 
         var questionInfo = _questionParser.Parse(question);
 
-        questionInfo.Question.PriceNumber = priceNumber;
-        questionInfo.Question.ThemeNumber = themeNumber;
-
         var adminConnectionId = session.Players.FirstOrDefault(p => p.IsAdmin)?.ConnectionId;
 
         if (adminConnectionId is null)

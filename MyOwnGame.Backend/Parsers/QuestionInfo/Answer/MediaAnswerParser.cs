@@ -8,7 +8,7 @@ public class MediaAnswerParser : IAnswerParser
     public AnswerBase ParseAnswer(Question question)
     {
         var answer = new MediaAnswer();
-        var scenario = question.Scenario.Atom.LastOrDefault();
+        var scenario = question.Scenario.Atom.LastOrDefault(a=> a.Type != null && a.Type != "say");
 
         if (scenario is null)
         {

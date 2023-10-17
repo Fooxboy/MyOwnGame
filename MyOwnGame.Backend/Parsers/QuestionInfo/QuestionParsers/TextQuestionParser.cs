@@ -22,4 +22,9 @@ public class TextQuestionParser : IQuestionParser
         
         return questionInfo;
     }
+
+    public List<QuestionBase> ParseQuestions(Question question)
+    {
+        throw new NotImplementedException();
+    }
 }

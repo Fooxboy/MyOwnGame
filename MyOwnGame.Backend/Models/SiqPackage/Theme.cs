@@ -6,7 +6,7 @@ namespace MyOwnGame.Backend.Models.SiqPackage;
 public class Theme { 
 
     [XmlElement(ElementName="questions")] 
-    public Questions Questions { get; set; } 
+    public Questions? Questions { get; set; } 
 
     [XmlAttribute(AttributeName="name")] 
     public string Name { get; set; } 

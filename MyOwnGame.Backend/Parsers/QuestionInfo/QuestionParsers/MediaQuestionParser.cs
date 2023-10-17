@@ -23,4 +23,9 @@ public class MediaQuestionParser : IQuestionParser
 
         return questionInfo;
     }
+
+    public List<QuestionBase> ParseQuestions(Question question)
+    {
+        throw new NotImplementedException();
+    }
 }

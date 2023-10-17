@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyOwnGame.Backend", "MyOwnG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyOwnClient.Autoplay", "MyOwnClient.Autoplay\MyOwnClient.Autoplay.csproj", "{7F8CF8AD-E8F8-4572-97E9-5AB7094D929D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyOwnGame.Tests", "MyOwnGame.Tests\MyOwnGame.Tests.csproj", "{4DF04B49-1DDA-49B2-B95F-5ABFBF2C1022}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{7F8CF8AD-E8F8-4572-97E9-5AB7094D929D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F8CF8AD-E8F8-4572-97E9-5AB7094D929D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F8CF8AD-E8F8-4572-97E9-5AB7094D929D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DF04B49-1DDA-49B2-B95F-5ABFBF2C1022}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DF04B49-1DDA-49B2-B95F-5ABFBF2C1022}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DF04B49-1DDA-49B2-B95F-5ABFBF2C1022}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DF04B49-1DDA-49B2-B95F-5ABFBF2C1022}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

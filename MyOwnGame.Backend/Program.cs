@@ -35,7 +35,9 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<IAnswerParser, TextAnswerParser>();
             builder.Services.AddTransient<IAnswerParser, MediaAnswerParser>();
             builder.Services.AddTransient<IQuestionParser, MediaQuestionParser>();    
-            builder.Services.AddTransient<IQuestionParser, TextQuestionParser>();
+            builder.Services.AddTransient<IQuestionParser, TextQuestionParser>();       
+            builder.Services.AddTransient<IQuestionParser, MultipleQuestionParser>();
+
             builder.Services.AddTransient<QuestionParser>();
             
             builder.Services.AddTransient<SessionService>();
