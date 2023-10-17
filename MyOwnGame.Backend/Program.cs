@@ -6,6 +6,7 @@ using MyOwnGame.Backend.Parsers.QuestionInfo;
 using MyOwnGame.Backend.Parsers.QuestionInfo.Answer;
 using MyOwnGame.Backend.Parsers.QuestionInfo.QuestionParsers;
 using MyOwnGame.Backend.Services;
+using NLog.Web;
 
 namespace MyOwnGame.Backend
 {
@@ -49,11 +50,13 @@ namespace MyOwnGame.Backend
                         .AllowAnyHeader();
                 });
             });
+            
+            builder.Logging.ClearProviders();
+            builder.Host.UseNLog();
 
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            
             app.UseSwagger();
             app.UseSwaggerUI();
 

@@ -22,6 +22,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation($"Пользователь '{userId}' пытается подключиться к сессии '{sessionId}'");
+            
             var session = await _sessionService.ConnectToSession(sessionId, userId, Context.ConnectionId);
 
             var player = _sessionService.GetPlayer(sessionId, userId);
@@ -30,12 +32,15 @@ public class SessionHub : Hub
                 .SendAsync(SessionEvents.PlayerConnectedToSession.ToString(), player);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, sessionId.ToString());
+            
+            _logger.LogInformation($"Пользователь '{userId}' подключился к сессии '{sessionId}'");
 
             return SessionDto.Create(session);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
+            
             throw new HubException(ex.Message, ex);
         }
     }
@@ -44,9 +49,15 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation($"Изменение раунда игры на '{roundNumber}'");
+            
             var round = _sessionService.ChangeRound(roundNumber, Context.ConnectionId);
 
             await Clients.Group(round.Item2.ToString()).SendAsync(SessionEvents.RoundChanged.ToString(), round.Item1);
+            
+            await Clients.Group(round.Item2.ToString()).SendAsync(SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(round.Item3));
+            
+            _logger.LogInformation($"Раунд игры изменен на '{roundNumber}'");
         }
         catch (Exception ex)
         {
@@ -59,6 +70,7 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation($"Выбор вопроса с темой: {themeNumber}, ценой: {priceNumber}");
             var questionInfoResponse = _sessionService.GetQuestionInfo(themeNumber, priceNumber, Context.ConnectionId);
 
             await Clients.Group(questionInfoResponse.Item2.ToString()).SendAsync(SessionEvents.QuestionSelected.ToString(),
@@ -79,6 +91,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation($"Попытка ответить в {time}");
+            
             var isSuccessResult = _sessionService.GiveAnswer(time, Context.ConnectionId);
 
             if (isSuccessResult.IsAnswer)
@@ -104,12 +118,15 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Принятие ответа");
             var acceptInfo = _sessionService.AcceptAnswer(Context.ConnectionId);
 
             await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
                 SessionEvents.AcceptAnswer.ToString(), PlayerDto.Create(acceptInfo.Player), acceptInfo.NewScore,
                 acceptInfo.Answer);
-
+            
+            await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
+                SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(acceptInfo.Player));
         }
         catch (Exception ex)
         {
@@ -122,6 +139,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Не принятие ответа");
+
             var rejectInfo = _sessionService.RejectAnswer(Context.ConnectionId);
             
             await Clients.Group(rejectInfo.Player.SessionId.ToString()).SendAsync(
@@ -138,6 +157,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Пропуск вопроса");
+
             var skipInfo = _sessionService.SkipQuestion(Context.ConnectionId);
             
             await Clients.Group(skipInfo.SessionId.ToString()).SendAsync(
@@ -154,6 +175,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Пауза игры");
+
             var sessionId = _sessionService.Pause(Context.ConnectionId);
             var session = _sessionService.GetSession(sessionId);
             
@@ -170,6 +193,8 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Продолжение игры");
+
             var sessionId = _sessionService.Resume(Context.ConnectionId);
             var session = _sessionService.GetSession(sessionId);
             

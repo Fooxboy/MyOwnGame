@@ -10,12 +10,21 @@ public class SessionsManager
     private readonly Dictionary<long, Session> _sessions = new();
     private readonly Dictionary<string, long> _usersConnections = new();
 
+    private readonly ILogger<SessionsManager> _logger;
+
+    public SessionsManager(ILogger<SessionsManager> logger)
+    {
+        _logger = logger;
+    }
+
     public Session CreateSession(Package package, long number)
     {
         var session = new Session(package);
         
         _sessions.Add(number, session);
-
+        
+        
+        _logger.LogInformation($"Добавлена новая сессия с номером '{number}'");
         return session;
     }
 
@@ -37,7 +46,8 @@ public class SessionsManager
 
             return (session, sessionId);
         }
-
+        
+        _logger.LogError($"Не найдена сессия по connectionId: {connectionId}");
         return (null, null);
     }
 
@@ -47,6 +57,8 @@ public class SessionsManager
 
         if (session is null)
         {
+            _logger.LogError($"Не найдена сессия с ID '{sessionId}'");
+            
             throw new Exception("Не найдена сессия");
         }
 
@@ -54,6 +66,8 @@ public class SessionsManager
         
         if (reconnectPlayer is not null)
         {
+            _logger.LogInformation("Пользотватель уже был в сессии. Возвращаем его информацию");
+            
             reconnectPlayer.ConnectionId = connectionId;
             return session;
         }
@@ -65,6 +79,8 @@ public class SessionsManager
         player.ConnectionId = connectionId;
         session.AddPlayer(player);
 
+        _logger.LogInformation($"Добавлен новый пользователь с ID подключения '{connectionId}' в сессию '{sessionId}'");
+        
         _usersConnections.Add(connectionId, sessionId);
         return session;
     }
@@ -100,18 +116,31 @@ public class SessionsManager
         return session.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
     }
 
-    public RoundInfo? ChangeRound(int roundPosition, long sessionId)
+    public (RoundInfo? RoundInfo, Player QuestionPlayer) ChangeRound(int roundPosition, long sessionId)
     {
         var session = GetSessionById(sessionId);
 
         if (session is null)
         {
-            return null;
+            _logger.LogError($"Не найдена сессия с ID '{sessionId}'");
+
+            throw new Exception("Не найдена сессия");
         }
         
         session.ChangeRound(roundPosition);
 
-        return session.CurrentRound;
+        var player = session.Players.OrderBy(p => p.Score).FirstOrDefault(p => !p.IsAdmin);
+
+        if (player is null)
+        {
+            _logger.LogError("Не найден игрок, который может выбирать вопрос");
+
+            throw new Exception("Не найден игрок, который может выбирать вопрос");
+        }
+        
+        session.SetSelectQuestionPlayer(player);
+
+        return (session.CurrentRound, player);
 
     }
     

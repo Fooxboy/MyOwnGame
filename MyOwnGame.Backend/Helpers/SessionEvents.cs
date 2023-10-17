@@ -55,5 +55,10 @@ public enum SessionEvents
     /// <summary>
     /// Вопрос пропустили (сразу дается ответ)
     /// </summary>
-    SkipQuestion
+    SkipQuestion,
+    
+    /// <summary>
+    /// Изменен игрок, который выбирает вопрос
+    /// </summary>
+    ChangeSelectQuestionPlayer,
 }

@@ -9,10 +9,12 @@ public class SiqPackageParser
 {
 
     private readonly IConfiguration _configuration;
+    private readonly ILogger<SiqPackageParser> _logger;
 
-    public SiqPackageParser(IConfiguration configuration)
+    public SiqPackageParser(IConfiguration configuration, ILogger<SiqPackageParser> logger)
     {
         _configuration = configuration;
+        _logger = logger;
     }
 
     public string UnpackPackage(string pathToZip, string hash)
@@ -25,6 +27,9 @@ public class SiqPackageParser
         foreach (var entry in archive.Entries)
         {
             var normalizedName = WebUtility.UrlDecode(entry.Name);
+            
+            _logger.LogTrace($"Распаковка файла {normalizedName}");
+            
             entry.ExtractToFile(Path.Combine(pathToExtractedPackaged, normalizedName), true);
         }
 
@@ -39,6 +44,8 @@ public class SiqPackageParser
 
         using var reader = new StringReader(fileStringContent);
         var package = serializer.Deserialize(reader) as Package;
+        
+        _logger.LogError("Файл content.xml успешно распаршен");
 
         return package;
     }

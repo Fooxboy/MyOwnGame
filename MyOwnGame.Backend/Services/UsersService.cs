@@ -8,37 +8,64 @@ public class UsersService
 {
     private readonly UsersManager _usersManager;
 
-    public UsersService(UsersManager usersManager)
+    private readonly ILogger<UsersService> _logger;
+
+    public UsersService(UsersManager usersManager, ILogger<UsersService> logger)
     {
         _usersManager = usersManager;
+        _logger = logger;
     }
 
-    public async Task<User> CreateUser(string filePath, string name)
+    public async Task<User?> CreateUser(string filePath, string name)
     {
-        return _usersManager.CreateUser(name, filePath);
-    }
-
-    public async Task<User> UpdateName(long id, string name)
-    {
-        var user = _usersManager.GetUser(id);
-
-        if (user is null)
+        try
         {
-            throw new Exception("Не найден пользователь");
+            return _usersManager.CreateUser(name, filePath);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError("Ошибка при создании нового пользователя");
+            _logger.LogError(ex, ex.Message);
 
-        var newUser = _usersManager.UpdateUser(id, name, user.AvatarImage);
-
-        return newUser;
+            return null;
+        }
     }
 
-    public async Task<User> UpdateAvatar(long id, string newAvatarFilePath)
+    public async Task<User?> UpdateName(long id, string name)
+    {
+        try
+        {
+            var user = _usersManager.GetUser(id);
+
+            if (user is null)
+            {
+                _logger.LogError($"Не найден пользоваетель с ID '{id}'");
+
+                return null;
+            }
+
+            var newUser = _usersManager.UpdateUser(id, name, user.AvatarImage);
+
+            return newUser;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Ошибка при изменении имени пользователя");
+            _logger.LogError(ex, ex.Message);
+
+            return null;
+        }
+    }
+
+    public async Task<User?> UpdateAvatar(long id, string newAvatarFilePath)
     {
         var user = _usersManager.GetUser(id);
 
         if (user is null)
         {
-            throw new Exception("Не найден пользователь");
+            _logger.LogError($"Не найден пользователь с ID '{id}'");
+            
+            return null;
         }
 
         var newUser = _usersManager.UpdateUser(id, user.Name, newAvatarFilePath);

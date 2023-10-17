@@ -20,7 +20,15 @@ public class Session
     
     public GameInfo GameInfo { get; }
     
+    /// <summary>
+    /// Отвечайющий игрок
+    /// </summary>
     public Player? RespondingPlayer { get; private set; }
+    
+    /// <summary>
+    /// Игрок который выбирает вопрос
+    /// </summary>
+    public Player? SelectQuestionPlayer { get; private set; }
     
     public SessionState State { get; private set; }
     
@@ -52,6 +60,16 @@ public class Session
             PackageCreatedAt = DateTime.Parse(package.Date),
             Themes = themesName
         };
+    }
+
+    public void SetSelectQuestionPlayer(Player player)
+    {
+        SelectQuestionPlayer = player;
+    }
+
+    public void ResetSelectQuestionPlayer()
+    {
+        SelectQuestionPlayer = null;
     }
 
     public void SetPackageHash(string hash)

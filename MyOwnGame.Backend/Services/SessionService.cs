@@ -14,20 +14,23 @@ public class SessionService
     private readonly SessionsManager _sessionsManager;
     private readonly UsersService _usersService;
     private readonly QuestionParser _questionParser;
+    private readonly ILogger<SessionService> _logger;
 
-    public SessionService(IConfiguration configuration, SiqPackageParser siqPackageParser, SessionsManager sessionsManager, QuestionParser questionParser, UsersService usersService)
+    public SessionService(IConfiguration configuration, SiqPackageParser siqPackageParser, SessionsManager sessionsManager, QuestionParser questionParser, UsersService usersService, ILogger<SessionService> logger)
     {
         _configuration = configuration;
         _siqPackageParser = siqPackageParser;
         _sessionsManager = sessionsManager;
         _questionParser = questionParser;
         _usersService = usersService;
+        _logger = logger;
     }
 
     public Session? CreateSession(string pathToPackage, long number)
     {
         if (_sessionsManager.GetSessionById(number) is not null)
         {
+            _logger.LogError($"Сессия с ID {number} уже существует.");
             throw new ArgumentException("Такой number уже существует, лол");
         }
         
@@ -41,15 +44,22 @@ public class SessionService
         }
         else
         {
+            _logger.LogInformation($"Распаковка архива {Path.GetFileName(pathToPackage)}");
             _siqPackageParser.UnpackPackage(pathToPackage, hash);
         }
 
         var pathToContent = Path.Combine(pathToUpackaged, "content.xml");
 
+        _logger.LogInformation("Парсинг content.xml");
+        
         var package = _siqPackageParser.ParsePackage(pathToContent);
 
         if (package is null)
         {
+            _logger.LogError("После парсинга content.xml, package оказался null");
+            
+            Directory.Delete(pathToUpackaged);
+            
             throw new ArgumentNullException("Package был null");
         }
 
@@ -66,6 +76,8 @@ public class SessionService
 
         if (user is null)
         {
+            _logger.LogError($"Не найден пользователь с ID {userId}");
+            
             throw new ArgumentException("Не найден пользователь");
         }
         
@@ -84,28 +96,31 @@ public class SessionService
         return _sessionsManager.GetPlayer(connectionId);
     }
 
-    public (RoundInfo, long) ChangeRound(int roundPosition, string connectionId)
+    public (RoundInfo, long, Player) ChangeRound(int roundPosition, string connectionId)
     {
         var player = GetPlayer(connectionId);
 
         if (player is null)
         {
+            _logger.LogError($"Не найден пользователь в сессии с ID подключения '{connectionId}'");
             throw new Exception("Не найден пользователь");
         }
 
         if (!player.IsAdmin)
         {
+            _logger.LogError("Пользователь не является админом");
             throw new Exception("Пользователь не админ епта");
         }
 
         var roundInfo = _sessionsManager.ChangeRound(roundPosition, player.SessionId);
-
-        if (roundInfo is null)
+        
+        if (roundInfo.RoundInfo is null)
         {
+            _logger.LogError("Ошибка при смене раунда");
             throw new Exception("Ошибка при смене раунда");
         }
 
-        return (roundInfo, player.SessionId);
+        return (roundInfo.RoundInfo, player.SessionId, roundInfo.QuestionPlayer);
     }
 
     public long Pause(string connectionId)
