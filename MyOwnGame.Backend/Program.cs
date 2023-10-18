@@ -48,7 +48,6 @@ namespace MyOwnGame.Backend
                 options.AddPolicy("any", builder =>
                 {
                     builder.AllowAnyOrigin()
-                        .AllowAnyOrigin()
                         .AllowCredentials()
                         .AllowAnyMethod()
                         .AllowAnyHeader();
