@@ -175,14 +175,24 @@ public class SessionService
 
         if (session is null)
         {
+            _logger.LogError("Не найдена сессия, в которой игрок учавствует");
+
             throw new Exception("Не найдена сессия");
         }
 
         if (session.CurrentRound is null)
         {
+            _logger.LogError("Игра ещё не началась");
+
             throw new Exception("Игра ещё не началась");
         }
-        
+
+        if (session.SelectQuestionPlayer.ConnectionId != connectionId)
+        {
+            _logger.LogError("Пользователь не может выбирать вопрос");
+            throw new Exception("Пользователь не может выбирать вопрос");
+        }
+
         var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
 
         var question = currentRound.Themes.Theme[themeNumber].Questions.Question[priceNumber];
@@ -193,6 +203,8 @@ public class SessionService
 
         if (adminConnectionId is null)
         {
+            _logger.LogError("Не найден админ в сесси");
+
             throw new Exception("Не найден connection ID админа");
         }
 

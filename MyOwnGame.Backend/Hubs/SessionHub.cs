@@ -172,6 +172,19 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task RemoveFinalTheme(int number)
+    {
+        try
+        {
+            _logger.LogInformation("Удаление финальной темы");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public async Task Pause()
     {
         try
