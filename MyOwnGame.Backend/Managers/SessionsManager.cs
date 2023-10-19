@@ -68,6 +68,7 @@ public class SessionsManager
         {
             _logger.LogInformation("Пользотватель уже был в сессии. Возвращаем его информацию");
             
+            reconnectPlayer.Connect();
             reconnectPlayer.ConnectionId = connectionId;
             return session;
         }
@@ -83,6 +84,21 @@ public class SessionsManager
         
         _usersConnections.Add(connectionId, sessionId);
         return session;
+    }
+
+    public void DisconnectFromSession(string playerConnectionId)
+    {
+        var session = GetSessionByConnection(playerConnectionId);
+
+        if (session is null)
+        {
+            _logger.LogError($"Не найдена сессия для удаления игрока с id подключения '{playerConnectionId}'");
+            throw new Exception($"Не найдена сессия для удаления игрока с id подключения '{playerConnectionId}'");
+        }
+
+        _usersConnections.Remove(playerConnectionId);
+        
+        session.RemovePlayer(playerConnectionId);
     }
 
     public Player? GetPlayer(long sessionId, long userId)
@@ -129,7 +145,7 @@ public class SessionsManager
         
         session.ChangeRound(roundPosition);
 
-        var player = session.Players.OrderBy(p => p.Score).FirstOrDefault(p => !p.IsAdmin);
+        var player = GetPlayerForSelectQuestion(session);
 
         if (player is null)
         {
@@ -141,7 +157,9 @@ public class SessionsManager
         session.SetSelectQuestionPlayer(player);
 
         return (session.CurrentRound, player);
-
     }
+
+    public Player? GetPlayerForSelectQuestion(Session session)=> 
+        session.Players.OrderBy(p => p.Score).FirstOrDefault(p => !p.IsAdmin && !p.IsDisconnected);
     
 }

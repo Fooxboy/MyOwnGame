@@ -11,6 +11,9 @@ public class Player : User
     public string ConnectionId { get; set; }
     
     public long SessionId { get; set; }
+
+
+    public bool IsDisconnected { get; private set; } = false;
     
     public static Player Create(User user, bool isAdmin, long sessionId)
     {
@@ -23,6 +26,16 @@ public class Player : User
         };
     }
 
+    public void Disconnect()
+    {
+        IsDisconnected = true;
+    }
+
+    public void Connect()
+    {
+        IsDisconnected = false;
+    }
+    
     public void AddScore(int score)
     {
         if (score < 0)

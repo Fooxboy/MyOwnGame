@@ -8,6 +8,11 @@ public enum SessionEvents
     PlayerConnectedToSession,
     
     /// <summary>
+    /// Пользователь отключился от сессиииииииии
+    /// </summary>
+    PlayerDisconnectedFromSession,
+    
+    /// <summary>
     /// Раунд изменен
     /// </summary>
     RoundChanged,

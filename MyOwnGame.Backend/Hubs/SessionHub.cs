@@ -46,6 +46,25 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task DisconnectFromSession()
+    {
+        try
+        {
+            var removingPlayer = await _sessionService.DisconnectFromSession(Context.ConnectionId);
+
+            await Clients.Group(removingPlayer.SessionId.ToString())
+                .SendAsync(SessionEvents.PlayerDisconnectedFromSession.ToString(), removingPlayer);
+            
+            _logger.LogInformation($"Пользователь '{removingPlayer.Id}' отключился от сессии");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public async Task ChangeRound(int roundNumber)
     {
         try
@@ -184,7 +203,7 @@ public class SessionHub : Hub
             throw new HubException(ex.Message, ex);
         }
     }
-
+    
     public async Task Pause()
     {
         try
@@ -213,6 +232,31 @@ public class SessionHub : Hub
             var session = _sessionService.GetSession(sessionId);
             
             await Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.GameResumed.ToString(), SessionDto.Create(session));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
+    public async override Task OnDisconnectedAsync(Exception? exception)
+    {
+        try
+        {
+            var disconnectedPlayer = await _sessionService.PlayerNetworkDisconnected(Context.ConnectionId);
+            
+            await Clients.Group(disconnectedPlayer.SessionId.ToString())
+                .SendAsync(SessionEvents.PlayerDisconnectedFromSession.ToString(), PlayerDto.Create(disconnectedPlayer));
+
+            var questionPlayer = await _sessionService.CheckSelectQuestionPlayer(Context.ConnectionId, disconnectedPlayer);
+
+            if (questionPlayer is not null)
+            {
+                await Clients.Group(questionPlayer.SessionId.ToString()).SendAsync(SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(questionPlayer));
+            }
+            
+            _logger.LogInformation($"Пользователь '{disconnectedPlayer.Id}' отключен по сетевой ошибке");
         }
         catch (Exception ex)
         {

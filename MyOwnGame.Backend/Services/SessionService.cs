@@ -86,6 +86,66 @@ public class SessionService
         return session;
     }
 
+    public async Task<Player> DisconnectFromSession(string connectionId)
+    {
+        var removingPlayer = _sessionsManager.GetPlayer(connectionId);
+
+        if (removingPlayer is null)
+        {
+            _logger.LogError($"Не найден игрок с connection id {connectionId}");
+
+            throw new Exception($"Не найден игрок с connection id {connectionId}");
+        }
+        
+        _sessionsManager.DisconnectFromSession(connectionId);
+
+        return removingPlayer;
+    }
+
+    public async Task<Player> PlayerNetworkDisconnected(string connectionId)
+    {
+        var disconnectedPlayer = _sessionsManager.GetPlayer(connectionId);
+
+        if (disconnectedPlayer is null)
+        {
+            _logger.LogError($"Не найден пользотваель с id подключения '{connectionId}'");
+
+            throw new Exception($"Не найден пользотваель с id подключения '{connectionId}'");
+        }
+        
+        disconnectedPlayer.Disconnect();
+
+        return disconnectedPlayer;
+    }
+
+    public async Task<Player?> CheckSelectQuestionPlayer(string connectionId, Player disconnectedPlayer)
+    {
+        var session = _sessionsManager.GetSessionByConnection(connectionId);
+
+        if (session is null)
+        {
+            _logger.LogError($"Не найдена сессия по ид подключения игрока '{connectionId}'");
+
+            throw new Exception($"Не найдена сессия по ид подключения игрока '{connectionId}'");
+        }
+
+        if (session.SelectQuestionPlayer is null || session.SelectQuestionPlayer.Id != disconnectedPlayer.Id)
+        {
+            return null;
+        }
+
+        var selectQuestionPlayer = _sessionsManager.GetPlayerForSelectQuestion(session);
+
+        if (selectQuestionPlayer is null)
+        {
+            throw new Exception("Не найден игрок для выбора вопроса");
+        }
+        
+        session.SetSelectQuestionPlayer(selectQuestionPlayer);
+        
+        return selectQuestionPlayer;
+    }
+
     public Player? GetPlayer(long sessionId, long userId)
     {
         return _sessionsManager.GetPlayer(sessionId, userId);

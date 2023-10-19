@@ -156,4 +156,16 @@ public class Session
     {
         CurrentQuestion = null;
     }
+
+    public void RemovePlayer(string playerConnectionId)
+    {
+        var removingPlayer = Players.FirstOrDefault(x => x.ConnectionId == playerConnectionId);
+        
+        if (removingPlayer is null)
+        {
+            throw new Exception("Не найден игрок для удаления из сессии или его нет уже в сесиии");
+        }
+        
+        this.Players.Remove(removingPlayer);
+    }
 }
