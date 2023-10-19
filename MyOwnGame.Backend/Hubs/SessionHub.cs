@@ -30,7 +30,7 @@ public class SessionHub : Hub
             var player = _sessionService.GetPlayer(sessionId, userId);
             
             await Clients.Group(sessionId.ToString())
-                .SendAsync(SessionEvents.PlayerConnectedToSession.ToString(), player);
+                .SendAsync(SessionEvents.PlayerConnectedToSession.ToString(), PlayerDto.Create(player));
             
             await Groups.AddToGroupAsync(Context.ConnectionId, sessionId.ToString());
             

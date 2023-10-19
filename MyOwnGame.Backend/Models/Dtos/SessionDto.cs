@@ -12,7 +12,9 @@ public class SessionDto
     
     public GameInfo GameInfo { get; set; }
     
-    public Player? RespondingPlayer { get;  set; }
+    public PlayerDto? RespondingPlayer { get;  set; }
+    
+    public PlayerDto? SelectQuestionPlayer { get; set; }
     
     public SessionState State { get;  set; }
 
@@ -24,7 +26,11 @@ public class SessionDto
         return new SessionDto()
         {
             Players = players.ToList(), CurrentRound = session.CurrentRound,
-            RespondingPlayer = session.RespondingPlayer, GameInfo = session.GameInfo, State = session.State, CreatedAt = session.CreatedAt
+            RespondingPlayer = PlayerDto.Create(session.RespondingPlayer), 
+            SelectQuestionPlayer = PlayerDto.Create(session.SelectQuestionPlayer),
+            GameInfo = session.GameInfo,
+            State = session.State, 
+            CreatedAt = session.CreatedAt
         };
     }
     

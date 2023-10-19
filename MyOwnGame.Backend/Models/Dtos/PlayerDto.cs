@@ -18,8 +18,19 @@ public class PlayerDto
     
     public long SessionId { get; set; }
 
-    public static PlayerDto Create(Player p)
+    public static PlayerDto? Create(Player? p)
     {
-        return new() { ConnectionId = p.ConnectionId, SessionId = p.SessionId, IsAdmin = p.IsAdmin, Score = p.Score };
+        if (p is null)
+        {
+            return null;
+        }
+        
+        return new() { ConnectionId = p.ConnectionId,
+            SessionId = p.SessionId,
+            IsAdmin = p.IsAdmin,
+            Id = p.Id,
+            Name = p.Name,
+            AvatarImage = p.AvatarImage,
+            Score = p.Score };
     }
 }

@@ -9,9 +9,9 @@ using Newtonsoft.Json.Linq;
 
 Console.WriteLine("Hello, World!");
 
-const string TARGET_REST_URL = "http://localhost:3000/";
+const string TARGET_REST_URL = "http://fooxboy.ru:3000/";
 
-const string TARGET_HUB_URL = "http://localhost:3000/hubs/session";
+const string TARGET_HUB_URL = "http://fooxboy.ru:3000/hubs/session";
 
 //Загружаем siq пакет
 
@@ -199,7 +199,7 @@ await userConnection.StartAsync();
 userConnection.ServerTimeout = TimeSpan.FromDays(1);
 
 //входим ккак админ
-var resultAdmin = await adminConnection.InvokeAsync<SessionDto>("ConnectToSession", 1234, adminUserId);
+var resultAdmin = await adminConnection.InvokeAsync<SessionDto>("ConnectToSession", 8029, adminUserId);
 
 
 var resultPlayer = await userConnection.InvokeAsync<SessionDto>("ConnectToSession", 1234, playerUserId);
