@@ -7,4 +7,6 @@ public class GameInfo
     public List<string> Themes { get; set; }
     
     public DateTime PackageCreatedAt { get; set; }
+    
+    public List<ShortRoundInfo> Rounds { get; set; }
 }

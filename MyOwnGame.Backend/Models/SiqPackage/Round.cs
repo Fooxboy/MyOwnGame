@@ -15,5 +15,5 @@ public class Round {
     public string Text { get; set; } 
 
     [XmlAttribute(AttributeName="type")] 
-    public string Type { get; set; } 
+    public string? Type { get; set; } 
 }

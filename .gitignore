@@ -1,5 +1,6 @@
 ﻿/.vs/MyOwnGame/DesignTimeBuild/.dtbcache.v2
 /.vs/MyOwnGame/v17/.futdcache.v2
+/MyOwnGame.Backend/bin/Release/
 /MyOwnClient.Autoplay/obj/Debug/net7.0/.NETCoreApp,Version=v7.0.AssemblyAttributes.cs
 /MyOwnGame.Backend/obj/Debug/net7.0/.NETCoreApp,Version=v7.0.AssemblyAttributes.cs
 /MyOwnGame.Backend/obj/Release/net7.0/linux-x64/.NETCoreApp,Version=v7.0.AssemblyAttributes.cs

@@ -58,7 +58,8 @@ public class Session
         {
             PackageName = package.Name, 
             PackageCreatedAt = DateTime.Parse(package.Date),
-            Themes = themesName
+            Themes = themesName,
+            Rounds = package.Rounds.Round.Select(x=> new ShortRoundInfo() {IsFinal = x.Type == "final", Name = x.Name}).ToList()
         };
     }
 
