@@ -70,6 +70,8 @@ public class SessionsManager
             
             reconnectPlayer.Connect();
             reconnectPlayer.ConnectionId = connectionId;
+            _usersConnections.Add(connectionId, sessionId);
+
             return session;
         }
         
