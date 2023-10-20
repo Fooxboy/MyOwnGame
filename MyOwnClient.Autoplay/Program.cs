@@ -9,9 +9,9 @@ using Newtonsoft.Json.Linq;
 
 Console.WriteLine("Hello, World!");
 
-const string TARGET_REST_URL = "http://fooxboy.ru:3000/";
+const string TARGET_REST_URL = "http://localhost:3000/";
 
-const string TARGET_HUB_URL = "http://fooxboy.ru:3000/hubs/session";
+const string TARGET_HUB_URL = "http://localhost:3000/hubs/session";
 
 //Загружаем siq пакет
 
@@ -29,6 +29,7 @@ var jsonSession = await response.Content.ReadAsStringAsync();
 
 Console.WriteLine($"Создана сессия, а вот инфа: {jsonSession}");
 
+var sessionId = JObject.Parse(jsonSession)["sessionId"].ToObject<long>();
 
 var adminUserId = 0;
 var playerUserId = 0;
@@ -199,14 +200,24 @@ await userConnection.StartAsync();
 userConnection.ServerTimeout = TimeSpan.FromDays(1);
 
 //входим ккак админ
-var resultAdmin = await adminConnection.InvokeAsync<SessionDto>("ConnectToSession", 8029, adminUserId);
+var resultAdmin = await adminConnection.InvokeAsync<SessionDto>("ConnectToSession", sessionId, adminUserId);
 
 
-var resultPlayer = await userConnection.InvokeAsync<SessionDto>("ConnectToSession", 1234, playerUserId);
+var resultPlayer = await userConnection.InvokeAsync<SessionDto>("ConnectToSession", sessionId, playerUserId);
+
+
+await adminConnection.DisposeAsync();
+
+//await adminConnection.InvokeAsync("DisconnectFromSession");
+
+
 
 Console.WriteLine("лол што");
 
+
 await adminConnection.InvokeAsync("ChangeRound", 0);
+
+
 
 await userConnection.InvokeAsync("SelectQuestion", 3, 4);
 

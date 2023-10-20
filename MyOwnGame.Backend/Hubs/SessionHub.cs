@@ -51,9 +51,12 @@ public class SessionHub : Hub
         try
         {
             var removingPlayer = await _sessionService.DisconnectFromSession(Context.ConnectionId);
+            
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, removingPlayer.SessionId.ToString());
 
             await Clients.Group(removingPlayer.SessionId.ToString())
                 .SendAsync(SessionEvents.PlayerDisconnectedFromSession.ToString(), removingPlayer);
+            
             
             _logger.LogInformation($"Пользователь '{removingPlayer.Id}' отключился от сессии");
         }

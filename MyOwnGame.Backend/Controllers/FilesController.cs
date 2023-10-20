@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Net.Http.Headers;
 using MyOwnGame.Backend.Services;
 
 namespace MyOwnGame.Backend.Controllers;
@@ -23,6 +24,8 @@ public class FilesController : Controller
             NotFound(filename);
         }
         
+        Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + (60 * 60 * 24);
+        
         return File(System.IO.File.OpenRead(filePath), "image/jpeg");
     }
 
@@ -39,6 +42,8 @@ public class FilesController : Controller
         new FileExtensionContentTypeProvider().TryGetContentType(filename, out string contentType);
         
         contentType = contentType ?? "application/octet-stream";
+        
+        Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + (60 * 60 * 24);
         
         return File(System.IO.File.OpenRead(filePath), contentType);
     }
