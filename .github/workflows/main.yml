@@ -11,6 +11,16 @@ jobs:
         with:
           dotnet-version: '7.0.x' # SDK Version to use.
       - run: dotnet publish -c Release -r linux-x64 --self-contained --output ./Release MyOwnGame.Backend
+      - name: Остановка сервера
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_SERVER }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATEKEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            screen -X -S sigame quit
       - name: Копирование файлов на сервер
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -22,7 +32,7 @@ jobs:
           source: "Release/*.*,!Release/appsettings.json"
           target: "~/sigame/"
           overwrite: true
-      - name: Run app in new screen on remote server
+      - name: Остановка сервера
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_SERVER }}
@@ -31,7 +41,7 @@ jobs:
           passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /sigame/Release
+            cd ~/sigame/Release
             chmod +x MyOwnGame.Backend
-            screen -X -S sigame quit
             screen -S sigame ./MyOwnGame.Backend
+      
