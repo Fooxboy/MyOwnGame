@@ -32,7 +32,7 @@ jobs:
           source: "Release/*.*,!Release/appsettings.json"
           target: "~/sigame/"
           overwrite: true
-      - name: Остановка сервера
+      - name: Запуск сервера
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_SERVER }}
@@ -43,5 +43,5 @@ jobs:
           script: |
             cd ~/sigame/Release
             chmod +x MyOwnGame.Backend
-            screen -S sigame ./MyOwnGame.Backend
+            script /dev/null -c "screen -S sigame ./MyOwnGame.Backend"
       
