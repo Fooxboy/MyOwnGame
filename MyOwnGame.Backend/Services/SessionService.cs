@@ -277,6 +277,8 @@ public class SessionService
 
         session.SelectCurrentQuestion(questionInfo);
 
+        session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
+
         return (questionInfo, currentPlayer.SessionId, adminConnectionId);
     }
 
@@ -331,6 +333,8 @@ public class SessionService
         
         session.ChangeStateToTable();
         session.SetSelectQuestionPlayer(answerData.Player);
+
+        session.CurrentRound.Themes[0].Prices[0].IsAnswered = true;
 
         return (player, player.Score, selectedQuestion.Answer);
     }
@@ -508,6 +512,7 @@ public class SessionService
         }
         
         var selectedQuestion = session.CurrentQuestion;
+        
 
         if (selectedQuestion is null)
         {
