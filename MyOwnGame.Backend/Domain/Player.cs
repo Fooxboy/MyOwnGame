@@ -4,7 +4,7 @@ namespace MyOwnGame.Backend.Domain;
 
 public class Player : User
 {
-    public required bool IsAdmin { get; init; }
+    public  bool IsAdmin { get; private set; }
     
     public int Score { get; private set; }
     
@@ -54,5 +54,20 @@ public class Player : User
         }
 
         Score -= score;
+    }
+
+    public void SetScore(int score)
+    {
+        this.Score = score;
+    }
+
+    public void SetAsAdmin()
+    {
+        IsAdmin = true;
+    }
+
+    public void RemoveAdmin()
+    {
+        IsAdmin = false;
     }
 }

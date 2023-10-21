@@ -145,8 +145,6 @@ public class SessionsManager
             throw new Exception("Не найдена сессия");
         }
         
-        session.ChangeRound(roundPosition);
-
         var player = GetPlayerForSelectQuestion(session);
 
         if (player is null)
@@ -158,6 +156,8 @@ public class SessionsManager
         
         session.SetSelectQuestionPlayer(player);
 
+        session.ChangeRound(roundPosition);
+       
         return (session.CurrentRound, player);
     }
 

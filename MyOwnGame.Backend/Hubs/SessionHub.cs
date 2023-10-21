@@ -50,6 +50,7 @@ public class SessionHub : Hub
     {
         try
         {
+            _logger.LogInformation("Пользотваель сам отключается от сессии");
             var removingPlayer = await _sessionService.DisconnectFromSession(Context.ConnectionId);
             
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, removingPlayer.SessionId.ToString());
@@ -57,8 +58,20 @@ public class SessionHub : Hub
             await Clients.Group(removingPlayer.SessionId.ToString())
                 .SendAsync(SessionEvents.PlayerDisconnectedFromSession.ToString(), removingPlayer);
             
-            
             _logger.LogInformation($"Пользователь '{removingPlayer.Id}' отключился от сессии");
+            
+            //проверяем шо он был не админом и все такое
+
+
+            _logger.LogInformation("Если пользователь был админом, тогда мы меняем админа");
+
+            var newAdmin = _sessionService.TryChangeAdmin(removingPlayer.SessionId);
+
+            if (newAdmin != null)
+            {
+                await Clients.Group(removingPlayer.SessionId.ToString())
+                    .SendAsync(SessionEvents.AdminChanged.ToString(), PlayerDto.Create(newAdmin));
+            }
         }
         catch (Exception ex)
         {
@@ -243,6 +256,58 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task SetScore(int playerId, int score)
+    {
+        try
+        {
+            _logger.LogInformation($"Попытка установки пользователю с ID '{playerId}' вот столько очков - '{score}'");
+
+            var newUser = _sessionService.SetPlayerScore(playerId, score, Context.ConnectionId);
+            
+            await Clients.Group(newUser.SessionId.ToString()).SendAsync(SessionEvents.ScoreChanged.ToString(), PlayerDto.Create(newUser), newUser.Score);
+            
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
+    public async Task SetAdmin(int playerId)
+    {
+        try
+        {
+            _logger.LogInformation($"Изменения админа сесси на '{playerId}'");
+
+            var newUser = _sessionService.SetAdmin(playerId, Context.ConnectionId);
+            
+            await Clients.Group(newUser.SessionId.ToString()).SendAsync(SessionEvents.AdminChanged.ToString(), PlayerDto.Create(newUser));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
+    public async Task ChangeSelectQuestionPlayer(int playerId)
+    {
+        try
+        {
+            _logger.LogInformation("Изменение игрока который может выбирать вопрос");
+
+            var newUser = _sessionService.SetSelectQuestionPlayer(playerId, Context.ConnectionId);
+            
+            await Clients.Group(newUser.SessionId.ToString()).SendAsync(SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(newUser));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public async override Task OnDisconnectedAsync(Exception? exception)
     {
         try
@@ -250,7 +315,7 @@ public class SessionHub : Hub
             var disconnectedPlayer = await _sessionService.PlayerNetworkDisconnected(Context.ConnectionId);
             
             await Clients.Group(disconnectedPlayer.SessionId.ToString())
-                .SendAsync(SessionEvents.PlayerDisconnectedFromSession.ToString(), PlayerDto.Create(disconnectedPlayer));
+                .SendAsync(SessionEvents.PlayerOffline.ToString(), PlayerDto.Create(disconnectedPlayer));
 
             var questionPlayer = await _sessionService.CheckSelectQuestionPlayer(Context.ConnectionId, disconnectedPlayer);
 

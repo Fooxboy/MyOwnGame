@@ -66,4 +66,19 @@ public enum SessionEvents
     /// Изменен игрок, который выбирает вопрос
     /// </summary>
     ChangeSelectQuestionPlayer,
+    
+    /// <summary>
+    /// Пользователь отключился из за сетевой ошибки
+    /// </summary>
+    PlayerOffline,
+    
+    /// <summary>
+    /// Администратор сменился
+    /// </summary>
+    AdminChanged,
+    
+    /// <summary>
+    /// Изменилось количество очков у игрока
+    /// </summary>
+    ScoreChanged,
 }

@@ -66,6 +66,8 @@ public class SessionService
         var session = _sessionsManager.CreateSession(package, number);
 
         session.SetPackageHash(hash);
+        
+        Directory.Delete(pathToPackage);
 
         return session;
     }
@@ -332,6 +334,7 @@ public class SessionService
         player.AddScore(selectedQuestion.Price);
         
         session.ChangeStateToTable();
+        session.SetSelectQuestionPlayer(answerData.Player);
 
         return (player, player.Score, selectedQuestion.Answer);
     }
@@ -370,6 +373,114 @@ public class SessionService
         session.ChangeStateToTable();
 
         return (sessionInfo.Item2, session.CurrentQuestion.Answer);
+    }
+
+    public Player? TryChangeAdmin(long sessionId)
+    {
+        var session = _sessionsManager.GetSessionById(sessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Сессия для поиска нового админа не найдена");
+        }
+
+        var hasAdmin = session.Players.Exists(p => p.IsAdmin);
+
+        if (hasAdmin)
+        {
+            return null;
+        }
+
+        var newAdmin = session.Players.OrderBy(p => p.Score).FirstOrDefault();
+
+        newAdmin?.SetAsAdmin();
+
+        return newAdmin;
+    }
+
+    public Player? SetPlayerScore(int playerId, int score, string connectionId)
+    {
+        var admin = _sessionsManager.GetPlayer(connectionId);
+
+        if (admin is null)
+        {
+            throw new Exception("Не найден игрок по id подключения");
+        }
+
+        if (!admin.IsAdmin)
+        {
+            throw new Exception($"Пользователь '{admin.Name} ({admin.Id})' не является админом сессии");
+        }
+
+
+        var user = _sessionsManager.GetPlayer(admin.SessionId, playerId);
+
+        if (user is null)
+        {
+            throw new Exception(
+                $"Неверный id пользователя '{playerId}' или пользователь не находится в одной сессии с админом");
+        }
+        
+        user.SetScore(score);
+
+        return user;
+    }
+
+    public Player? SetAdmin(int playerId, string connectionId)
+    {
+        var admin = _sessionsManager.GetPlayer(connectionId);
+
+        if (admin is null)
+        {
+            throw new Exception("Не найден игрок по id подключения");
+        }
+
+        if (!admin.IsAdmin)
+        {
+            throw new Exception($"Пользователь '{admin.Name} ({admin.Id})' не является админом сессии");
+        }
+
+        var player = _sessionsManager.GetPlayer(admin.SessionId, playerId);
+        
+        if (player is null)
+        {
+            throw new Exception(
+                $"Неверный id пользователя '{playerId}' или пользователь не находится в одной сессии с админом");
+        }
+        
+        admin.RemoveAdmin();
+        player.SetAsAdmin();
+
+        return player;
+    }
+
+    public Player? SetSelectQuestionPlayer(int playerId, string connectionId)
+    {
+        var admin = _sessionsManager.GetPlayer(connectionId);
+
+        if (admin is null)
+        {
+            throw new Exception("Не найден игрок по id подключения");
+        }
+
+        if (!admin.IsAdmin)
+        {
+            throw new Exception($"Пользователь '{admin.Name} ({admin.Id})' не является админом сессии");
+        }
+
+        var player = _sessionsManager.GetPlayer(admin.SessionId, playerId);
+        
+        if (player is null)
+        {
+            throw new Exception(
+                $"Неверный id пользователя '{playerId}' или пользователь не находится в одной сессии с админом");
+        }
+
+        var session = _sessionsManager.GetSessionById(admin.SessionId);
+        
+        session.SetSelectQuestionPlayer(player);
+
+        return player;
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)
