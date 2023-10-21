@@ -17,6 +17,8 @@ public class PlayerDto
     public string ConnectionId { get; set; }
     
     public long SessionId { get; set; }
+    
+    public bool IsDisconnected { get; set; }
 
     public static PlayerDto? Create(Player? p)
     {
@@ -31,6 +33,8 @@ public class PlayerDto
             Id = p.Id,
             Name = p.Name,
             AvatarImage = p.AvatarImage,
-            Score = p.Score };
+            Score = p.Score,
+            IsDisconnected = p.IsDisconnected
+        };
     }
 }

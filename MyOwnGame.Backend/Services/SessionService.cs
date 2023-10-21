@@ -38,15 +38,13 @@ public class SessionService
 
         var pathToUpackaged = Path.Combine(_configuration.GetValue<string>("packagesPath"), hash);
         
-        if (Directory.Exists(pathToUpackaged))
-        {
-            File.Delete(pathToPackage);
-        }
-        else
+        if (!Directory.Exists(pathToUpackaged))
         {
             _logger.LogInformation($"Распаковка архива {Path.GetFileName(pathToPackage)}");
             _siqPackageParser.UnpackPackage(pathToPackage, hash);
         }
+
+        File.Delete(pathToPackage);
 
         var pathToContent = Path.Combine(pathToUpackaged, "content.xml");
 
