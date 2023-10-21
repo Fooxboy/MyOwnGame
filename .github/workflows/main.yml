@@ -20,7 +20,7 @@ jobs:
           passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            screen -X -S sigame quit
+            sudo systemctl stop sigame.service
       - name: Копирование файлов на сервер
         uses: appleboy/scp-action@v0.1.4
         with:
@@ -41,7 +41,5 @@ jobs:
           passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd ~/sigame/Release
-            chmod +x MyOwnGame.Backend
-            script /dev/null -c "screen -S sigame ./MyOwnGame.Backend"
+              sudo systemctl start sigame.service
       
