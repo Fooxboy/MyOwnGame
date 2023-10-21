@@ -12,12 +12,11 @@ jobs:
           dotnet-version: '7.0.x' # SDK Version to use.
       - run: dotnet publish -c Release -r linux-x64 --self-contained --output ./Release MyOwnGame.Backend
       - name: Остановка сервера
-        uses: appleboy/ssh-action@v1.0.0
+        uses: matheusvanzan/sshpass-action@v2
         with:
           host: ${{ secrets.SSH_SERVER }}
-          username: ${{ secrets.SSH_USER }}
+          user: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATEKEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
           script: |
             sudo systemctl stop sigame.service
@@ -33,13 +32,12 @@ jobs:
           target: "~/sigame/"
           overwrite: true
       - name: Запуск сервера
-        uses: appleboy/ssh-action@v1.0.0
+        uses: matheusvanzan/sshpass-action@v2
         with:
-          host: ${{ secrets.SSH_SERVER }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATEKEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSWORD }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-              sudo systemctl start sigame.service
+         host: ${{ secrets.SSH_SERVER }}
+         user: ${{ secrets.SSH_USER }}
+         key: ${{ secrets.SSH_PRIVATEKEY }}
+         port: ${{ secrets.SSH_PORT }}
+         script: |
+            sudo systemctl start sigame.service
       
