@@ -67,8 +67,6 @@ public class SessionService
 
         session.SetPackageHash(hash);
         
-        Directory.Delete(pathToPackage);
-
         return session;
     }
 
