@@ -177,7 +177,7 @@ public class SessionService
             _logger.LogError("Ошибка при смене раунда");
             throw new Exception("Ошибка при смене раунда");
         }
-
+        
         return (roundInfo.RoundInfo, player.SessionId, roundInfo.QuestionPlayer);
     }
 
@@ -481,6 +481,54 @@ public class SessionService
         session.SetSelectQuestionPlayer(player);
 
         return player;
+    }
+
+    public (List<RoundTheme> themes, Player? newSelectQuestionPlayer) RemoveFinalTheme(int position, string connectionId)
+    {
+        var player = _sessionsManager.GetPlayer(connectionId);
+
+        if (player is null)
+        {
+            throw new Exception($"Не найден игрок с id подключения '{connectionId}'");
+        }
+
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception($"Не найдена сессия с id '{player.SessionId}'");
+        }
+
+        if (session.SelectQuestionPlayer is null)
+        {
+            throw new Exception("Нет игрока, который должен выбирать вопрос.");
+        }
+        
+        if (session.SelectQuestionPlayer.Id != player.Id)
+        {
+            throw new Exception($"Игрок с id '{player.Id}' не может выбирать вопрос");
+        }
+        
+        session.RemoveTheme(position);
+
+        var indexPlayer = session.Players.IndexOf(player);
+        
+        if (indexPlayer == -1)
+        {
+            throw new Exception("ВСЕ СЛОМАЛОСЬ, Я ОБОСРАЛСЯ С ИНДЕКСОМ НУЖНА ПОПРАВИТЬ!!!!");
+        }
+
+        indexPlayer++;
+
+        var newPlayer = session.Players[indexPlayer];
+
+        if (newPlayer.IsAdmin)
+        {
+            indexPlayer++;
+            newPlayer = session.Players[indexPlayer];
+        }
+
+        return (session.CurrentRound.Themes, newPlayer);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

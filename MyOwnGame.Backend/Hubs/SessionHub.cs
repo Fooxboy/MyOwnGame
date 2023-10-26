@@ -212,6 +212,15 @@ public class SessionHub : Hub
         try
         {
             _logger.LogInformation("Удаление финальной темы");
+
+            var removeInfo = _sessionService.RemoveFinalTheme(number, Context.ConnectionId);
+            
+            await Clients.Group(removeInfo.newSelectQuestionPlayer.SessionId.ToString()).SendAsync(
+                SessionEvents.FinalThemeRemoved.ToString(), removeInfo.themes);
+            
+            await Clients.Group(removeInfo.newSelectQuestionPlayer.SessionId.ToString()).SendAsync(
+                SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(removeInfo.newSelectQuestionPlayer));
+            
         }
         catch (Exception ex)
         {

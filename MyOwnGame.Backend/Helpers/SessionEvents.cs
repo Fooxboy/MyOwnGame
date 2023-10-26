@@ -81,4 +81,9 @@ public enum SessionEvents
     /// Изменилось количество очков у игрока
     /// </summary>
     ScoreChanged,
+    
+    /// <summary>
+    /// Удалена финальная тема
+    /// </summary>
+    FinalThemeRemoved,
 }

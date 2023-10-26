@@ -169,4 +169,19 @@ public class Session
         
         this.Players.Remove(removingPlayer);
     }
+
+    public void RemoveTheme(int position)
+    {
+        if (CurrentRound is null)
+        {
+            throw new Exception("Не получилось удалить финальный раунд, потому что нет выбранного раунда в сессии");
+        }
+
+        if (!CurrentRound.IsFinal)
+        {
+            throw new Exception("Нельзя убрать тему не у финальной темы");
+        }
+        
+        CurrentRound.Themes.Remove(CurrentRound.Themes[position]);
+    }
 }
