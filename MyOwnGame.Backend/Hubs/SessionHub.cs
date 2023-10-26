@@ -110,10 +110,10 @@ public class SessionHub : Hub
             var questionInfoResponse = _sessionService.GetQuestionInfo(themeNumber, priceNumber, Context.ConnectionId);
 
             await Clients.Group(questionInfoResponse.Item2.ToString()).SendAsync(SessionEvents.QuestionSelected.ToString(),
-                questionInfoResponse.Item1.Questions, new QuestionSelectedPosition() {QuestionNumber = priceNumber, ThemeNumber = themeNumber});
+                questionInfoResponse.Item1.Questions.Select(x=> QuestionDto.Create(x)).ToList(), new QuestionSelectedPosition() {QuestionNumber = priceNumber, ThemeNumber = themeNumber});
 
             await Clients.Client(questionInfoResponse.Item3).SendAsync(SessionEvents.QuestionSelectedAdmin.ToString(),
-                questionInfoResponse.Item1.Answer);
+                AsnwerDto.Create(questionInfoResponse.Item1.Answer));
 
         }
         catch (Exception ex)
