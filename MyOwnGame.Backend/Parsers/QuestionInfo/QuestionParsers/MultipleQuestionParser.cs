@@ -15,7 +15,7 @@ public class MultipleQuestionParser : IQuestionParser
     {
         var questions = new List<QuestionBase>();
 
-        foreach (var atom in question.Scenario.Atom.Where(x=> string.IsNullOrEmpty(x.Text)))
+        foreach (var atom in question.Scenario.Atom.Where(x=> !string.IsNullOrEmpty(x.Text)))
         {
             switch (atom.Type)
             {
