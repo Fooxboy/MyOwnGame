@@ -104,7 +104,7 @@ public class QuestionParser
             parser = _packQuestionParsers.OfType<SimpleQuestionPackParser>().FirstOrDefault();
         }
 
-        var questionTypeName = question.Type.Name;
+        var questionTypeName = question.Type?.Name;
 
         parser = questionTypeName switch
         {
@@ -113,6 +113,7 @@ public class QuestionParser
             "bagcat" => _packQuestionParsers.OfType<SuperCatQuestionParser>().FirstOrDefault(),
             "sponsored" => _packQuestionParsers.OfType<FreeQuestionParser>().FirstOrDefault(),
             "Другой" => _packQuestionParsers.OfType<OtherQuestionParser>().FirstOrDefault(),
+             null => _packQuestionParsers.OfType<SimpleQuestionPackParser>().FirstOrDefault(),
             _ => parser
         };
 
