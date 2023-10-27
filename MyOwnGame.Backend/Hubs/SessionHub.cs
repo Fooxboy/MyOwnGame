@@ -110,7 +110,7 @@ public class SessionHub : Hub
             var questionInfoResponse = _sessionService.GetQuestionInfo(themeNumber, priceNumber, Context.ConnectionId);
 
             await Clients.Group(questionInfoResponse.Item2.ToString()).SendAsync(SessionEvents.QuestionSelected.ToString(),
-                questionInfoResponse.Item1.Questions.Select(x=> QuestionDto.Create(x)).ToList(), new QuestionSelectedPosition() {QuestionNumber = priceNumber, ThemeNumber = themeNumber});
+                questionInfoResponse.Item1.Questions.Select(x=> QuestionDto.Create(x)).ToList(), questionInfoResponse.Item1.QuestionPackInfo, new QuestionSelectedPosition() {QuestionNumber = priceNumber, ThemeNumber = themeNumber});
 
             await Clients.Client(questionInfoResponse.Item3).SendAsync(SessionEvents.QuestionSelectedAdmin.ToString(),
                 AsnwerDto.Create(questionInfoResponse.Item1.Answer));
@@ -157,10 +157,18 @@ public class SessionHub : Hub
             _logger.LogInformation("Принятие ответа");
             var acceptInfo = _sessionService.AcceptAnswer(Context.ConnectionId);
 
-            await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
-                SessionEvents.AcceptAnswer.ToString(), PlayerDto.Create(acceptInfo.Player), acceptInfo.NewScore,
-                acceptInfo.Answer);
-            
+            if (acceptInfo.Answer != null)
+            {
+                await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
+                    SessionEvents.AcceptAnswer.ToString(), PlayerDto.Create(acceptInfo.Player), acceptInfo.NewScore,
+                    acceptInfo.Answer);
+            }
+            else
+            {
+                await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
+                    SessionEvents.ScoreChanged.ToString(), PlayerDto.Create(acceptInfo.Player), acceptInfo.NewScore);
+            }
+          
             await Clients.Group(acceptInfo.Player.SessionId.ToString()).SendAsync(
                 SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(acceptInfo.Player));
         }
@@ -309,6 +317,43 @@ public class SessionHub : Hub
             var newUser = _sessionService.SetSelectQuestionPlayer(playerId, Context.ConnectionId);
             
             await Clients.Group(newUser.SessionId.ToString()).SendAsync(SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(newUser));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
+    public async Task SendFinalAnswer(string text, int price)
+    {
+        try
+        {
+            _logger.LogInformation($"Отправка финального ответа от пользователя  '{Context.ConnectionId}' '{text}'");
+
+            var finalAnswerResponse = _sessionService.SendFinalAnswer(text, price, Context.ConnectionId);
+            
+            await Clients.Group(finalAnswerResponse.SessionId.ToString()).SendAsync(SessionEvents.FinalQuestionResponsed.ToString(), PlayerDto.Create(finalAnswerResponse));
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
+    public async Task ShowFinalAnswer(int playerId)
+    {
+        try
+        {
+            _logger.LogInformation("Показ финального вопроса всем пользователям");
+
+            var showFinalAnswerReponse = _sessionService.ShowFinalAnswer(playerId, Context.ConnectionId);
+            
+            await Clients.Group(showFinalAnswerReponse.Player.SessionId.ToString()).SendAsync(SessionEvents.UserFinalAnswer.ToString(), 
+                PlayerDto.Create(showFinalAnswerReponse.Player),
+                showFinalAnswerReponse.Answer, showFinalAnswerReponse.Price);
         }
         catch (Exception ex)
         {

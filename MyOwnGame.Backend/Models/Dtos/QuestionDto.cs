@@ -1,6 +1,6 @@
 ﻿using MyOwnGame.Backend.Models.Questions;
 
-namespace MyOwnGame.Backend.Models;
+namespace MyOwnGame.Backend.Models.Dtos;
 
 public class QuestionDto
 {

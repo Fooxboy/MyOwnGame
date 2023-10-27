@@ -44,6 +44,8 @@ public class Session
     [JsonIgnore]
     public string PackageHash { get; private set; }
     
+    public List<FinalAnswer> FinalAnswers { get; private set; }
+    
     public Session(Package package)
     {
         CreatedAt = DateTime.UtcNow;
@@ -61,6 +63,8 @@ public class Session
             Themes = themesName,
             Rounds = package.Rounds.Round.Select(x=> new ShortRoundInfo() {IsFinal = x.Type == "final", Name = x.Name}).ToList()
         };
+
+        FinalAnswers = new List<FinalAnswer>();
     }
 
     public void SetSelectQuestionPlayer(Player player)
@@ -183,5 +187,10 @@ public class Session
         }
         
         CurrentRound.Themes.Remove(CurrentRound.Themes[position]);
+    }
+
+    public void AddFinalAnswer(Player player, string answer, int price)
+    {
+        FinalAnswers.Add(new FinalAnswer(){ Player = player, Answer = answer, Price = price});
     }
 }

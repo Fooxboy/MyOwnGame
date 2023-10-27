@@ -1,6 +1,6 @@
 ﻿using MyOwnGame.Backend.Domain;
 
-namespace MyOwnGame.Backend.Models;
+namespace MyOwnGame.Backend.Models.Dtos;
 
 public class CreateSessionDto
 {

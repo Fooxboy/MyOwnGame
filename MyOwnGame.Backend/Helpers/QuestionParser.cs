@@ -3,6 +3,7 @@ using MyOwnGame.Backend.Models.Questions;
 using MyOwnGame.Backend.Models.SiqPackage;
 using MyOwnGame.Backend.Parsers.QuestionInfo;
 using MyOwnGame.Backend.Parsers.QuestionInfo.Answer;
+using MyOwnGame.Backend.Parsers.QuestionInfo.PackQuestion;
 using MyOwnGame.Backend.Parsers.QuestionInfo.QuestionParsers;
 
 namespace MyOwnGame.Backend.Helpers;
@@ -12,17 +13,21 @@ public class QuestionParser
     private readonly IEnumerable<IAnswerParser> _answerParsers;
 
     private readonly IEnumerable<IQuestionParser> _questionParsers;
+
+    private readonly IEnumerable<IPackQuestionParser> _packQuestionParsers;
     
-    public QuestionParser(IEnumerable<IQuestionParser> questionParsers, IEnumerable<IAnswerParser> answerParsers)
+    public QuestionParser(IEnumerable<IQuestionParser> questionParsers, IEnumerable<IAnswerParser> answerParsers, IEnumerable<IPackQuestionParser> packQuestionParsers)
     {
         _questionParsers = questionParsers;
         _answerParsers = answerParsers;
+        _packQuestionParsers = packQuestionParsers;
     }
 
     public QuestionInfo Parse(Question question)
     {
         var questionParser = GetQuestionParser(question);
         var answerParser = GetAnswerParser(question);
+        var questionPackParser = GetPackQuestionParser(question);
         
         var questionInfo = new QuestionInfo()
         {
@@ -30,6 +35,7 @@ public class QuestionParser
             Questions = question.Scenario.Atom.Count == 1 
                 ? new List<QuestionBase>() {questionParser.ParseQuestion(question)} 
                 : questionParser.ParseQuestions(question),
+            QuestionPackInfo = questionPackParser.ParseInfo(question),
             Price = question.Price
         };
 
@@ -85,6 +91,30 @@ public class QuestionParser
         {
             throw new Exception("Не найден парсер для ответов");
         }
+
+        return parser;
+    }
+
+    private IPackQuestionParser GetPackQuestionParser(Question question)
+    {
+        IPackQuestionParser? parser = null;
+
+        if (question.Type is null)
+        {
+            parser = _packQuestionParsers.OfType<SimpleQuestionPackParser>().FirstOrDefault();
+        }
+
+        var questionTypeName = question.Type.Name;
+
+        parser = questionTypeName switch
+        {
+            "auction" => _packQuestionParsers.OfType<AuctionQuestionParser>().FirstOrDefault(),
+            "cat" => _packQuestionParsers.OfType<CatQuestionParser>().FirstOrDefault(),
+            "bagcat" => _packQuestionParsers.OfType<SuperCatQuestionParser>().FirstOrDefault(),
+            "sponsored" => _packQuestionParsers.OfType<FreeQuestionParser>().FirstOrDefault(),
+            "Другой" => _packQuestionParsers.OfType<OtherQuestionParser>().FirstOrDefault(),
+            _ => parser
+        };
 
         return parser;
     }

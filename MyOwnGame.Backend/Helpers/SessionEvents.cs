@@ -86,4 +86,15 @@ public enum SessionEvents
     /// Удалена финальная тема
     /// </summary>
     FinalThemeRemoved,
+    
+    /// <summary>
+    /// Отвечена финальная тема юзером
+    /// </summary>
+    FinalQuestionResponsed,
+    
+    /// <summary>
+    /// Финальный ответ пользователя
+    /// </summary>
+    UserFinalAnswer,
+    
 }

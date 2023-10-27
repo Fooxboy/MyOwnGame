@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyOwnGame.Backend.Models;
+using MyOwnGame.Backend.Models.Dtos;
 using MyOwnGame.Backend.Services;
 
 namespace MyOwnGame.Backend.Controllers;

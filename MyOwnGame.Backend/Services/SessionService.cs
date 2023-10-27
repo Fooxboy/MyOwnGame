@@ -322,7 +322,7 @@ public class SessionService
         return (true, player, sessionInfo.Item2);
     }
 
-    public (Player Player, int NewScore, AnswerBase Answer) AcceptAnswer(string connectionId)
+    public (Player Player, int NewScore, AnswerBase? Answer) AcceptAnswer(string connectionId)
     {
         var answerData = ValidateAnswerData(connectionId);
         var player = answerData.Player;
@@ -330,13 +330,16 @@ public class SessionService
         var session = answerData.Session;
         
         player.AddScore(selectedQuestion.Price);
-        
-        session.ChangeStateToTable();
-        session.SetSelectQuestionPlayer(answerData.Player);
 
-        session.CurrentRound.Themes[0].Prices[0].IsAnswered = true;
+        if (!answerData.Session.CurrentRound.IsFinal)
+        {
+            session.ChangeStateToTable();
+            session.SetSelectQuestionPlayer(answerData.Player);
 
-        return (player, player.Score, selectedQuestion.Answer);
+            session.CurrentRound.Themes[0].Prices[0].IsAnswered = true;
+        }
+     
+        return (player, player.Score, selectedQuestion?.Answer);
     }
 
     public (Player Player, int NewScore) RejectAnswer(string connectionId)
@@ -345,13 +348,15 @@ public class SessionService
         var player = answerData.Player;
         var selectedQuestion = answerData.QuestionInfo;
         var session = answerData.Session;
+
+        if (!answerData.Session.CurrentRound.IsFinal)
+        {
+            session.ChangeStateToAnswer();
+        }
         
         player.RemoveScore(selectedQuestion.Price);
         
-        session.ChangeStateToAnswer();
-
         return (player, player.Score);
-
     }
 
     public (long? SessionId, AnswerBase Answer) SkipQuestion(string connectionId)
@@ -531,12 +536,69 @@ public class SessionService
         return (session.CurrentRound.Themes, newPlayer);
     }
 
+    public Player SendFinalAnswer(string message, int price, string connectionId)
+    {
+        var session = _sessionsManager.GetSessionByConnection(connectionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия :(");
+        }
+
+        var player = _sessionsManager.GetPlayer(connectionId);
+        
+        if (player is null)
+        {
+            throw new Exception("Не найден игрок, который отправил ответ");
+        }
+        
+        session.AddFinalAnswer(player, message, price);
+
+        return player;
+    }
+
+    public FinalAnswer ShowFinalAnswer(int playerId, string connectionId)
+    {
+        var adminUser = _sessionsManager.GetPlayer(connectionId);
+
+        if (adminUser is null)
+        {
+            throw new Exception("Админ не найден");
+        }
+
+        if (!adminUser.IsAdmin)
+        {
+            throw new Exception("Ты не админ уйди отсюдава");
+        }
+
+        var player = _sessionsManager.GetPlayer(adminUser.SessionId, playerId);
+
+        if (player is null)
+        {
+            throw new Exception("Не найден игрок, которому надо показать финальный ответ");
+        }
+
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+        
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия у игрока, вопрос котого надо показать");
+        }
+        
+        session.ChangeStateToAnswer();
+
+        var answer = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id);
+
+        return answer;
+    }
+
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)
     {
         var sessionInfo = _sessionsManager.GetSessionInfoByConnection(connectionId);
 
         var session = sessionInfo.Item1;
-
+        
         if (session is null)
         {
             throw new Exception("Сессия не найдена");
@@ -558,9 +620,13 @@ public class SessionService
         {
             throw new Exception("Не найден игрок лол");
         }
+
+        if (session.CurrentRound.IsFinal)
+        {
+            return (player, null, session);
+        }
         
         var selectedQuestion = session.CurrentQuestion;
-        
 
         if (selectedQuestion is null)
         {

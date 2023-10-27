@@ -4,6 +4,7 @@ using MyOwnGame.Backend.Managers;
 using MyOwnGame.Backend.Parsers;
 using MyOwnGame.Backend.Parsers.QuestionInfo;
 using MyOwnGame.Backend.Parsers.QuestionInfo.Answer;
+using MyOwnGame.Backend.Parsers.QuestionInfo.PackQuestion;
 using MyOwnGame.Backend.Parsers.QuestionInfo.QuestionParsers;
 using MyOwnGame.Backend.Services;
 using NLog.Web;
@@ -37,6 +38,13 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<IQuestionParser, MediaQuestionParser>();    
             builder.Services.AddTransient<IQuestionParser, TextQuestionParser>();       
             builder.Services.AddTransient<IQuestionParser, MultipleQuestionParser>();
+
+            builder.Services.AddTransient<IPackQuestionParser, AuctionQuestionParser>();
+            builder.Services.AddTransient<IPackQuestionParser, CatQuestionParser>();
+            builder.Services.AddTransient<IPackQuestionParser, SuperCatQuestionParser>();
+            builder.Services.AddTransient<IPackQuestionParser, FreeQuestionParser>();
+            builder.Services.AddTransient<IPackQuestionParser, OtherQuestionParser>();
+            builder.Services.AddTransient<IPackQuestionParser, SimpleQuestionPackParser>();
 
             builder.Services.AddTransient<QuestionParser>();
             
