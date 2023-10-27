@@ -15,16 +15,16 @@ public class MultipleQuestionParser : IQuestionParser
     {
         var questions = new List<QuestionBase>();
 
-        foreach (var atom in question.Scenario.Atom.Where(x=> !string.IsNullOrEmpty(x.Text)))
+        foreach (var atom in question.Scenario.Atom.Where(atom => !string.IsNullOrEmpty(atom.Text) || atom.Type == "marker"))
         {
             switch (atom.Type)
             {
-                case null:
-                case "say":
-                    questions.Add(new TextQuestion(){ Text = atom.Text, Type = QuestionContentType.Text });
-                    break;
                 case "marker":
                     return questions;
+                case "say":
+                    questions.Add(new TextQuestion(){ Text = atom.Text, Type = QuestionContentType.Text });
+                
+                    continue;
                 default:
                     questions.Add(new MediaQuestion()
                     {
