@@ -3,14 +3,17 @@ on:
     branches:
       - master
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v3
+      - name: Подготовка
+        uses: actions/checkout@v4
+      - name: Установка .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.x' # SDK Version to use.
-      - run: dotnet publish -c Release -r linux-x64 --self-contained --output ./Release MyOwnGame.Backend
+      - name: Компиляция проекта
+        run: dotnet publish -c Release -r linux-x64 --self-contained --output ./Release MyOwnGame.Backend
       - name: Остановка сервера
         uses: appleboy/ssh-action@v1.0.0
         with:
