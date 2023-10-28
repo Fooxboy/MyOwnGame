@@ -310,14 +310,16 @@ public class SessionService
             throw new Exception("Не найден текущий пользователь што");
         }
 
-        session.ChangeStateToQuestion();
+        var seconds = session.ChangeStateToQuestion(questionInfo.Questions.Count);
+        
+        DelayTaskRunner.Run(seconds, async () => await _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
 
         session.SelectCurrentQuestion(questionInfo);
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
 
         await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
-            questionInfo.QuestionPackInfo, themeNumber, priceNumber);
+            questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
 
         await _callbackService.QuestionSelectedAdmin(currentPlayer.SessionId, questionInfo.Answer);
     }

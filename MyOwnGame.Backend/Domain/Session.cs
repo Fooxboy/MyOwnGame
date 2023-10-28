@@ -46,7 +46,9 @@ public class Session
     
     public List<FinalAnswer> FinalAnswers { get; private set; }
     
-    public Session(Package package)
+    public SessionSettings Settings { get; private set; }
+    
+    public Session(Package package, SessionSettings? settings = null)
     {
         CreatedAt = DateTime.UtcNow;
         
@@ -65,6 +67,8 @@ public class Session
         };
 
         FinalAnswers = new List<FinalAnswer>();
+
+        Settings = settings ?? new SessionSettings() { TimeToReadyAnswer = 5 };
     }
 
     public void SetSelectQuestionPlayer(Player player)
@@ -119,11 +123,14 @@ public class Session
         RespondingPlayer = null;
     }
 
-    public void ChangeStateToQuestion()
+    public int ChangeStateToQuestion(int countQuestions)
     {
         State = SessionState.Question;
+        var seconds = Settings.TimeToReadyAnswer * countQuestions;
         
-        ReadyToAnswerTime = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+        ReadyToAnswerTime = DateTime.UtcNow + TimeSpan.FromSeconds(seconds);
+
+        return seconds;
     }
 
     public void ChangeStateToAnswer()

@@ -97,4 +97,9 @@ public enum SessionEvents
     /// </summary>
     UserFinalAnswer,
     
+    /// <summary>
+    /// Пользователь может нажать кнопку "Ответить"
+    /// </summary>
+    PlayerCanAnswer,
+    
 }

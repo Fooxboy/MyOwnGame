@@ -12,7 +12,6 @@ public class Player : User
     
     public long SessionId { get; set; }
 
-
     public bool IsDisconnected { get; private set; } = false;
     
     public static Player Create(User user, bool isAdmin, long sessionId)

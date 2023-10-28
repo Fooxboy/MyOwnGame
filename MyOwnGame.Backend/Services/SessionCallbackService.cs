@@ -59,7 +59,7 @@ public class SessionCallbackService
             .SendAsync(SessionEvents.ChangeSelectQuestionPlayer.ToString(), PlayerDto.Create(player));
     }
 
-    public async Task QuestionSelected(long sessionId, List<QuestionBase> questions, QuestionPackInfo? questionPackInfo,
+    public async Task QuestionSelected(long sessionId, List<QuestionBase> questions, QuestionPackInfo? questionPackInfo, int delayTime,
         int themePosition, int pricePosition)
     {
         var questionDtos = questions.Select(x => QuestionDto.Create(x)).ToList();
@@ -68,6 +68,7 @@ public class SessionCallbackService
             .SendAsync(SessionEvents.QuestionSelected.ToString(), 
                 questionDtos, 
                 questionPackInfo, 
+                delayTime,
                 new QuestionSelectedPosition() {QuestionNumber = pricePosition, ThemeNumber = themePosition});
     }
 
@@ -148,6 +149,12 @@ public class SessionCallbackService
     {
         await _hubContext.Clients.Group(sessionId.ToString())
             .SendAsync(SessionEvents.PlayerOffline.ToString(), PlayerDto.Create(player));
+    }
+
+    public async Task PlayerCanAnswer(long sessionId)
+    {
+        await _hubContext.Clients.Group(sessionId.ToString())
+            .SendAsync(SessionEvents.PlayerCanAnswer.ToString());
     }
     
 }

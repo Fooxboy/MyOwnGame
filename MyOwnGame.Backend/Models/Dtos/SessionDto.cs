@@ -18,7 +18,6 @@ public class SessionDto
     
     public SessionState State { get;  set; }
 
-
     public static SessionDto Create(Session session)
     {
         var players = session.Players.Select(PlayerDto.Create);
