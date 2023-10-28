@@ -113,7 +113,7 @@ async function connectToSession(sessionId){
 		connection.on("RoundChanged", roundInfo => setRound(roundInfo));
 		connection.on("ChangeSelectQuestionPlayer", player => setPlayerSelecting(player));
 		connection.on("PlayerOffline", player => setPlayerOffline(player));
-		connection.on("QuestionSelected", (question, type, position) => showQuestion(question, type, position));
+		connection.on("QuestionSelected", (question, type, time, position) => showQuestion(question, type, time, position));
 
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);

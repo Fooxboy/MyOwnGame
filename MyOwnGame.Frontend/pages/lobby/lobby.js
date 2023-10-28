@@ -1,4 +1,6 @@
-var audio;
+let audio;
+let isAdmin;
+let canChooseAnswer;
 
 /*
 ======================
@@ -14,13 +16,14 @@ if(session.currentRound)
 if(session.selectQuestionPlayer)
 	setPlayerSelecting(session.selectQuestionPlayer);
 
-
 // DEBUG
-session.gameInfo.rounds.forEach((round, i) => {
-	document.querySelector("#tools").innerHTML += `
-		<div class="button" onclick="requestRound(${i})">${round.name}</div>
-	`;
-});
+if(isAdmin){
+	session.gameInfo.rounds.forEach((round, i) => {
+		document.querySelector("#tools").innerHTML += `
+			<div class="button" onclick="requestRound(${i})">${round.name}</div>
+		`;
+	});
+}
 
 document.querySelector("#invite-field").value = `${window.location.href}?invite=${session.id}`;
 
@@ -35,6 +38,7 @@ function addPlayer(player){
 	const imageUrl = `${address}/avatars/${player.avatarImage}`;
 
 	if(player.isAdmin){
+		isAdmin = player.id == userId;
 		const adminPanel = document.querySelector("#admin-panel");
 		if(!adminPanel) {
 			adminPanel = document.createElement("div");
@@ -70,7 +74,7 @@ function addPlayer(player){
 		
 		if(player.isDisconnected)
 			setPlayerOffline(player);
-		else if(player.id == session.selectQuestionPlayer.id)
+		else if(session.selectQuestionPlayer && player.id == session.selectQuestionPlayer.id)
 			setPlayerSelecting(player);
 		else
 			setPlayerStatus(player.id, null);
@@ -110,13 +114,15 @@ function setRound(roundInfo){
 
 function setPlayerSelecting(player){
 	setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
+	canChooseAnswer = player.id == userId;
+	document.body.classList.toggle("can-choose-price", canChooseAnswer);
 }
 
 function setPlayerOffline(player){
 	setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
 }
 
-function showQuestion(question, type, position){
+function showQuestion(question, type, time, position){
 	console.log("Showing question:");
 	console.log(question);
 	console.log("With type:");

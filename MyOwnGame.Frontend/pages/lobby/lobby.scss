@@ -116,7 +116,6 @@
     		margin: 3px 0;
 
     		transition: background 0.2s ease;
-    		cursor: pointer;
 
 			background: rgb(220, 220, 220);
 			color: rgba(50, 50, 50, 1.0);
@@ -143,8 +142,9 @@
 				color: rgba(120, 120, 120, 1.0);
 			}
 
-			&:hover {
+			.can-choose-price &:hover{
 				background: rgba(240, 240, 240, 1);
+				cursor: pointer;
 			}
 
 			&.selected {
