@@ -49,7 +49,9 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<QuestionParser>();
             
             builder.Services.AddTransient<SessionService>();
-            builder.Services.AddTransient<FilesService>();
+            builder.Services.AddTransient<FilesService>();           
+            builder.Services.AddTransient<SessionCallbackService>();
+
             
             builder.Services.AddCors(options =>
             {

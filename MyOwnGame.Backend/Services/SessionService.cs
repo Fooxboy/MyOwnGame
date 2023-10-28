@@ -3,6 +3,7 @@ using MyOwnGame.Backend.Helpers;
 using MyOwnGame.Backend.Managers;
 using MyOwnGame.Backend.Models;
 using MyOwnGame.Backend.Models.Answers;
+using MyOwnGame.Backend.Models.QuestionsAdditionalInfo;
 using MyOwnGame.Backend.Parsers;
 
 namespace MyOwnGame.Backend.Services;
@@ -15,8 +16,10 @@ public class SessionService
     private readonly UsersService _usersService;
     private readonly QuestionParser _questionParser;
     private readonly ILogger<SessionService> _logger;
+    private readonly SessionCallbackService _callbackService;
 
-    public SessionService(IConfiguration configuration, SiqPackageParser siqPackageParser, SessionsManager sessionsManager, QuestionParser questionParser, UsersService usersService, ILogger<SessionService> logger)
+    public SessionService(IConfiguration configuration, SiqPackageParser siqPackageParser, SessionsManager sessionsManager, 
+        QuestionParser questionParser, UsersService usersService, ILogger<SessionService> logger, SessionCallbackService callbackService)
     {
         _configuration = configuration;
         _siqPackageParser = siqPackageParser;
@@ -24,6 +27,7 @@ public class SessionService
         _questionParser = questionParser;
         _usersService = usersService;
         _logger = logger;
+        _callbackService = callbackService;
     }
 
     public Session? CreateSession(string pathToPackage, long number)
@@ -80,6 +84,11 @@ public class SessionService
         }
         
         var session = _sessionsManager.ConnectToSession(sessionId, user, connectionId);
+
+        var player = GetPlayer(sessionId, userId);
+
+        await _callbackService.PlayerConnectedToSession(sessionId, player);
+        await _callbackService.SubscribeUserToEvents(sessionId, player.ConnectionId);
        
         return session;
     }
@@ -97,6 +106,18 @@ public class SessionService
         
         _sessionsManager.DisconnectFromSession(connectionId);
 
+        await _callbackService.PlayerDisconnectedFromSession(removingPlayer.SessionId, removingPlayer);
+
+        _logger.LogInformation("Если пользователь был админом, тогда мы меняем админа");
+
+        var newAdmin = TryChangeAdmin(removingPlayer.SessionId);
+
+        if (newAdmin is not null)
+        {
+            _logger.LogInformation("Меняем админа");
+            await _callbackService.AdminChanged(removingPlayer.SessionId, newAdmin);
+        }
+
         return removingPlayer;
     }
 
@@ -113,6 +134,15 @@ public class SessionService
         
         disconnectedPlayer.Disconnect();
 
+        await _callbackService.PlayerOffline(disconnectedPlayer.SessionId, disconnectedPlayer);
+        
+        var questionPlayer = await CheckSelectQuestionPlayer(connectionId, disconnectedPlayer);
+
+        if (questionPlayer is not null)
+        {
+            await _callbackService.ChangeSelectQuestionPlayer(disconnectedPlayer.SessionId, questionPlayer);
+        }
+        
         return disconnectedPlayer;
     }
 
@@ -154,7 +184,7 @@ public class SessionService
         return _sessionsManager.GetPlayer(connectionId);
     }
 
-    public (RoundInfo, long, Player) ChangeRound(int roundPosition, string connectionId)
+    public async Task ChangeRound(int roundPosition, string connectionId)
     {
         var player = GetPlayer(connectionId);
 
@@ -177,8 +207,10 @@ public class SessionService
             _logger.LogError("Ошибка при смене раунда");
             throw new Exception("Ошибка при смене раунда");
         }
-        
-        return (roundInfo.RoundInfo, player.SessionId, roundInfo.QuestionPlayer);
+
+        await _callbackService.RoundChanged(player.SessionId, roundInfo.RoundInfo);
+
+        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, roundInfo.QuestionPlayer);
     }
 
     public long Pause(string connectionId)
@@ -227,7 +259,7 @@ public class SessionService
         return session;
     }
 
-    public (QuestionInfo, long, string) GetQuestionInfo(int themeNumber, int priceNumber, string connectionId)
+    public async Task GetQuestionInfo(int themeNumber, int priceNumber, string connectionId)
     {
         var session = _sessionsManager.GetSessionByConnection(connectionId);
 
@@ -243,6 +275,11 @@ public class SessionService
             _logger.LogError("Игра ещё не началась");
 
             throw new Exception("Игра ещё не началась");
+        }
+
+        if (session.SelectQuestionPlayer is null)
+        {
+            throw new Exception("Не найден игрок, который выбирает вопрос");
         }
 
         if (session.SelectQuestionPlayer.ConnectionId != connectionId)
@@ -279,10 +316,13 @@ public class SessionService
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
 
-        return (questionInfo, currentPlayer.SessionId, adminConnectionId);
+        await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
+            questionInfo.QuestionPackInfo, themeNumber, priceNumber);
+
+        await _callbackService.QuestionSelectedAdmin(currentPlayer.SessionId, questionInfo.Answer);
     }
 
-    public (bool IsAnswer, Player? Player, long? SessionId) GiveAnswer(DateTime time, string connectionId)
+    public async Task GiveAnswer(DateTime time, string connectionId)
     {
         var sessionInfo = _sessionsManager.GetSessionInfoByConnection(connectionId);
 
@@ -300,49 +340,51 @@ public class SessionService
             throw new Exception("Не найден игрок лол");
         }
 
-        if (session.State != SessionState.Question)
+        if (session.State != SessionState.Question || session.ReadyToAnswerTime > DateTime.UtcNow || session.RespondingPlayer is not null)
         {
-            return (false, player, sessionInfo.Item2);
+            await _callbackService.PlayerTryedAnswer(player.SessionId, player);
+            return;
         }
 
-        if (session.ReadyToAnswerTime > DateTime.UtcNow)
-        {
-            return  (false, player, sessionInfo.Item2);
-        }
-      
-        if (session.RespondingPlayer is not null)
-        {
-            return  (false, player, sessionInfo.Item2);
-        }
-       
         session.ChangeRespondingPlayer(player);
         
         session.ChangeStateToAnswer();
 
-        return (true, player, sessionInfo.Item2);
+        await _callbackService.PlayerAnswer(player.SessionId, player);
     }
 
-    public (Player Player, int NewScore, AnswerBase? Answer) AcceptAnswer(string connectionId)
+    public async Task AcceptAnswer(string connectionId)
     {
         var answerData = ValidateAnswerData(connectionId);
         var player = answerData.Player;
         var selectedQuestion = answerData.QuestionInfo;
         var session = answerData.Session;
         
-        player.AddScore(selectedQuestion.Price);
-
+        //Если это не финал, мы действуем по обычной логике
         if (!answerData.Session.CurrentRound.IsFinal)
         {
+            player.AddScore(selectedQuestion.Price);
             session.ChangeStateToTable();
             session.SetSelectQuestionPlayer(answerData.Player);
 
             session.CurrentRound.Themes[0].Prices[0].IsAnswered = true;
+
+            await _callbackService.AcceptAnswer(player.SessionId, player, player.Score, answerData.QuestionInfo.Answer);
+
+            await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, player);
         }
-     
-        return (player, player.Score, selectedQuestion?.Answer);
+        else
+        {
+            //Если это финал - цену мы берем из финальных ответов и не показываем ответ.
+            
+            var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
+            player.AddScore(price);
+            
+            await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+        }
     }
 
-    public (Player Player, int NewScore) RejectAnswer(string connectionId)
+    public async Task RejectAnswer(string connectionId)
     {
         var answerData = ValidateAnswerData(connectionId);
         var player = answerData.Player;
@@ -351,15 +393,22 @@ public class SessionService
 
         if (!answerData.Session.CurrentRound.IsFinal)
         {
+            player.RemoveScore(selectedQuestion.Price);
             session.ChangeStateToAnswer();
+
+            await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
         }
-        
-        player.RemoveScore(selectedQuestion.Price);
-        
-        return (player, player.Score);
+        else
+        {
+            var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
+            
+            player.RemoveScore(price);
+
+            await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+        }
     }
 
-    public (long? SessionId, AnswerBase Answer) SkipQuestion(string connectionId)
+    public async Task SkipQuestion(string connectionId)
     {
         var sessionInfo = _sessionsManager.GetSessionInfoByConnection(connectionId); 
         
@@ -377,7 +426,7 @@ public class SessionService
         
         session.ChangeStateToTable();
 
-        return (sessionInfo.Item2, session.CurrentQuestion.Answer);
+        await _callbackService.SkipQuestion(sessionInfo.Item2.Value, session.CurrentQuestion.Answer);
     }
 
     public Player? TryChangeAdmin(long sessionId)
@@ -403,7 +452,7 @@ public class SessionService
         return newAdmin;
     }
 
-    public Player? SetPlayerScore(int playerId, int score, string connectionId)
+    public async Task SetPlayerScore(int playerId, int score, string connectionId)
     {
         var admin = _sessionsManager.GetPlayer(connectionId);
 
@@ -428,10 +477,10 @@ public class SessionService
         
         user.SetScore(score);
 
-        return user;
+        await _callbackService.ScoreChanged(user.SessionId, user, user.Score);
     }
 
-    public Player? SetAdmin(int playerId, string connectionId)
+    public async Task SetAdmin(int playerId, string connectionId)
     {
         var admin = _sessionsManager.GetPlayer(connectionId);
 
@@ -456,10 +505,10 @@ public class SessionService
         admin.RemoveAdmin();
         player.SetAsAdmin();
 
-        return player;
+        await _callbackService.AdminChanged(player.SessionId, player);
     }
 
-    public Player? SetSelectQuestionPlayer(int playerId, string connectionId)
+    public async Task SetSelectQuestionPlayer(int playerId, string connectionId)
     {
         var admin = _sessionsManager.GetPlayer(connectionId);
 
@@ -482,13 +531,18 @@ public class SessionService
         }
 
         var session = _sessionsManager.GetSessionById(admin.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия в которой находится админ");
+        }
         
         session.SetSelectQuestionPlayer(player);
 
-        return player;
+        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, player);
     }
 
-    public (List<RoundTheme> themes, Player? newSelectQuestionPlayer) RemoveFinalTheme(int position, string connectionId)
+    public async Task RemoveFinalTheme(int position, string connectionId)
     {
         var player = _sessionsManager.GetPlayer(connectionId);
 
@@ -533,10 +587,11 @@ public class SessionService
             newPlayer = session.Players[indexPlayer];
         }
 
-        return (session.CurrentRound.Themes, newPlayer);
+        await _callbackService.FinalThemeRemoved(player.SessionId, session.CurrentRound.Themes);
+        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, newPlayer);
     }
 
-    public Player SendFinalAnswer(string message, int price, string connectionId)
+    public async Task SendFinalAnswer(string message, int price, string connectionId)
     {
         var session = _sessionsManager.GetSessionByConnection(connectionId);
 
@@ -554,10 +609,10 @@ public class SessionService
         
         session.AddFinalAnswer(player, message, price);
 
-        return player;
+        await _callbackService.FinalQuestionResponsed(player.SessionId, player);
     }
 
-    public FinalAnswer ShowFinalAnswer(int playerId, string connectionId)
+    public async Task ShowFinalAnswer(int playerId, string connectionId)
     {
         var adminUser = _sessionsManager.GetPlayer(connectionId);
 
@@ -590,7 +645,7 @@ public class SessionService
 
         var answer = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id);
 
-        return answer;
+        await _callbackService.UserFinalAnswer(player.SessionId, answer);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)
