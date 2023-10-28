@@ -1,3 +1,3 @@
 export default {
-  base = '/MyOwnGame/'
+  base: '/MyOwnGame/'
 }
