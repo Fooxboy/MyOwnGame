@@ -1,5 +1,5 @@
 export default {
-  base: '/MyOwnGame/'
+  base: '/MyOwnGame/',
   experimental: {
   renderBuiltUrl(filename: string, { hostType }: { hostType: 'js' | 'css' | 'html' }) {
       if (hostType === 'js') {
