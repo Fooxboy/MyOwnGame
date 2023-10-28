@@ -48,6 +48,8 @@ public class Session
     
     public SessionSettings Settings { get; private set; }
     
+    public List<AuctionPrice>? AuctionPrices { get; private set; }
+    
     public Session(Package package, SessionSettings? settings = null)
     {
         CreatedAt = DateTime.UtcNow;
@@ -71,6 +73,18 @@ public class Session
         Settings = settings ?? new SessionSettings() { TimeToReadyAnswer = 5 };
     }
 
+    public void AddAuctionPrice(Player player, int score)
+    {
+        AuctionPrices ??= new List<AuctionPrice>();
+        
+        AuctionPrices.Add(new AuctionPrice(){ Player = player, Price = score});
+    }
+
+    public void ResetAuctionPrice()
+    {
+        AuctionPrices = null;
+    }
+    
     public void SetSelectQuestionPlayer(Player player)
     {
         SelectQuestionPlayer = player;

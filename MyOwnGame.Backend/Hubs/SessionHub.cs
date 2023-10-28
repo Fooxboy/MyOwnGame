@@ -276,6 +276,19 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task SetQuestionPrice(int price)
+    {
+        try
+        {
+            await _sessionService.SetQuestionPrice(price, Context.ConnectionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         try

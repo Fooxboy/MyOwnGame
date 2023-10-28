@@ -102,4 +102,16 @@ public enum SessionEvents
     /// </summary>
     PlayerCanAnswer,
     
+    /// <summary>
+    /// Нужно установить цену
+    /// </summary>
+    NeedSetQuestionPrice,
+    
+    //Цена вопроса установлена :)
+    QuestionPriceInstalled,
+    
+    /// <summary>
+    /// Пользователь устанавливает цену вопроса
+    /// </summary>
+    PlayerInstallingQuestionPrice,
 }

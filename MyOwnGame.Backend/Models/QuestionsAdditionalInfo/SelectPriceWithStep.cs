@@ -6,5 +6,5 @@ public class SelectPriceWithStep
     
     public int To { get; set; }
     
-    public int Step { get; set; }
+    public int? Step { get; set; }
 }

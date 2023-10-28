@@ -3,6 +3,7 @@ using MyOwnGame.Backend.Helpers;
 using MyOwnGame.Backend.Managers;
 using MyOwnGame.Backend.Models;
 using MyOwnGame.Backend.Models.Answers;
+using MyOwnGame.Backend.Models.Questions;
 using MyOwnGame.Backend.Models.QuestionsAdditionalInfo;
 using MyOwnGame.Backend.Parsers;
 
@@ -294,6 +295,9 @@ public class SessionService
 
         var questionInfo = _questionParser.Parse(question);
 
+        questionInfo.ThemeNumber = themeNumber;
+        questionInfo.PriceNumber = priceNumber;
+
         var adminConnectionId = session.Players.FirstOrDefault(p => p.IsAdmin)?.ConnectionId;
 
         if (adminConnectionId is null)
@@ -310,20 +314,37 @@ public class SessionService
             throw new Exception("Не найден текущий пользователь што");
         }
 
+        session.SelectCurrentQuestion(questionInfo);
+
+        if (questionInfo.QuestionPackInfo is not null && questionInfo.QuestionPackInfo.Type != QuestionPackType.Simple)
+        {
+            //Если это аукцион - возвращаем инфу о том что выбран вопрос, но без вопросов.
+            if (questionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
+            {
+                await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
+
+                await _callbackService.QuestionSelected(currentPlayer.SessionId, new List<QuestionBase>(),
+                    questionInfo.QuestionPackInfo, -1, themeNumber, priceNumber);
+
+                await _callbackService.NeedSetQuestionPrice(currentPlayer.SessionId, currentPlayer, 1, currentPlayer.Score, 1);
+
+                return;
+            }
+        }
+        
+        //simple
         var seconds = session.ChangeStateToQuestion(questionInfo.Questions.Count);
         
         DelayTaskRunner.Run(seconds, async () => await _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
-
-        session.SelectCurrentQuestion(questionInfo);
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
 
         await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
             questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
 
-        await _callbackService.QuestionSelectedAdmin(currentPlayer.SessionId, questionInfo.Answer);
+        await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
     }
-
+    
     public async Task GiveAnswer(DateTime time, string connectionId)
     {
         var sessionInfo = _sessionsManager.GetSessionInfoByConnection(connectionId);
@@ -365,11 +386,20 @@ public class SessionService
         //Если это не финал, мы действуем по обычной логике
         if (!answerData.Session.CurrentRound.IsFinal)
         {
-            player.AddScore(selectedQuestion.Price);
+            if (answerData.QuestionInfo.QuestionPackInfo != null &&
+                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
+            {
+                var price = session.AuctionPrices.FirstOrDefault(x => x.Player.Id == player.Id);
+                
+                player.AddScore(price.Price);
+            }
+            else
+            {
+                player.AddScore(selectedQuestion.Price);
+            }
+            
             session.ChangeStateToTable();
             session.SetSelectQuestionPlayer(answerData.Player);
-
-            session.CurrentRound.Themes[0].Prices[0].IsAnswered = true;
 
             await _callbackService.AcceptAnswer(player.SessionId, player, player.Score, answerData.QuestionInfo.Answer);
 
@@ -395,7 +425,18 @@ public class SessionService
 
         if (!answerData.Session.CurrentRound.IsFinal)
         {
-            player.RemoveScore(selectedQuestion.Price);
+
+            if (answerData.QuestionInfo.QuestionPackInfo != null &&
+                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
+            {
+                var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
+                player.RemoveScore(price);
+            }
+            else
+            {
+                player.RemoveScore(selectedQuestion.Price);
+            }
+            
             session.ChangeStateToAnswer();
 
             await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
@@ -648,6 +689,51 @@ public class SessionService
         var answer = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id);
 
         await _callbackService.UserFinalAnswer(player.SessionId, answer);
+    }
+
+    public async Task SetQuestionPrice(int price, string userConnectionId)
+    {
+        var player = _sessionsManager.GetPlayer(userConnectionId);
+
+        if (player is null)
+        {
+            throw new Exception("Не найден игрок, который пытается установить цену");
+        }
+
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия в которой находится игрок");
+        }
+        
+        session.AddAuctionPrice(player, price);
+
+        var playersWithoutInstallPrices = session.Players.Where(p => !session.AuctionPrices!.Exists(x => x.Player.Id == p.Id) && !p.IsAdmin);
+
+        var nextPlayer = playersWithoutInstallPrices.FirstOrDefault();
+
+        if (nextPlayer is null)
+        {
+            var questionPlayer = session.AuctionPrices!.MaxBy(price => price.Price).Player;
+            
+            session.SetSelectQuestionPlayer(questionPlayer);
+
+            await _callbackService.ChangeSelectQuestionPlayer(questionPlayer.SessionId, questionPlayer);
+
+            var questionInfo = session.CurrentQuestion;
+            
+            session.CurrentRound.Themes[questionInfo.ThemeNumber].Prices[questionInfo.PriceNumber].IsAnswered = true;
+            
+            await _callbackService.QuestionSelected(questionPlayer.SessionId, questionInfo.Questions,
+                questionInfo.QuestionPackInfo, -1, questionInfo.ThemeNumber, questionInfo.PriceNumber);
+
+            return;
+        }
+
+        await _callbackService.QuestionPriceInstalled(player.SessionId, player, price);
+
+        await _callbackService.NeedSetQuestionPrice(nextPlayer.SessionId, nextPlayer, 0, nextPlayer.Score, 1);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

@@ -72,9 +72,9 @@ public class SessionCallbackService
                 new QuestionSelectedPosition() {QuestionNumber = pricePosition, ThemeNumber = themePosition});
     }
 
-    public async Task QuestionSelectedAdmin(long sessionId, AnswerBase answer)
+    public async Task QuestionSelectedAdmin(string adminConnectionId, AnswerBase answer)
     {
-        await _hubContext.Clients.Client(sessionId.ToString()).SendAsync(SessionEvents.QuestionSelectedAdmin.ToString(),
+        await _hubContext.Clients.Client(adminConnectionId).SendAsync(SessionEvents.QuestionSelectedAdmin.ToString(),
             AsnwerDto.Create(answer));
     }
 
@@ -156,5 +156,18 @@ public class SessionCallbackService
         await _hubContext.Clients.Group(sessionId.ToString())
             .SendAsync(SessionEvents.PlayerCanAnswer.ToString());
     }
-    
+
+    public async Task NeedSetQuestionPrice(long sessionId, Player player, int min, int max, int step)
+    {
+        await _hubContext.Clients.Client(player.ConnectionId).SendAsync(SessionEvents.NeedSetQuestionPrice.ToString(),
+            new SelectPriceWithStep() {From = min, To = max, Step = step});
+        
+        await _hubContext.Clients.Group(player.SessionId.ToString()).SendAsync(SessionEvents.PlayerInstallingQuestionPrice.ToString(), PlayerDto.Create(player));
+    }
+
+    public async Task QuestionPriceInstalled(long sessionId, Player player, int? score)
+    {
+        await _hubContext.Clients.Group(sessionId.ToString())
+            .SendAsync(SessionEvents.QuestionPriceInstalled.ToString(), PlayerDto.Create(player), score);
+    }
 }

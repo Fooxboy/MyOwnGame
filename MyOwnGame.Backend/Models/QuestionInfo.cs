@@ -13,4 +13,8 @@ public class QuestionInfo
     public required AnswerBase Answer { get; set; }
     
     public required int Price { get; set; }
+    
+    public int ThemeNumber { get; set; }
+    
+    public int PriceNumber { get; set; }
 }
