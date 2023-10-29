@@ -113,7 +113,7 @@ function setRound(roundInfo){
 
 		theme.prices.forEach((price, r) => {
 			themePanel.innerHTML += `
-				<div class="price" id="price-${r}" onclick="requestPrice(${i}, ${r})">${roundInfo.isFinal ? "удалить" : price.price}</div>
+				<div class="price ${price.isAnswered ? "answered" : ""}" id="price-${r}" onclick="requestPrice(${i}, ${r})">${roundInfo.isFinal ? "удалить" : price.price}</div>
 			`;
 		});
 	});
@@ -147,6 +147,7 @@ function showQuestion(question, type, time, position){
 
 	setTimeout(() => {
 		priceElement.classList.remove("selected");
+		priceElement.classList.add("answered");
 		processQuestionPart(question, 0);
 	}, 1000);
 
@@ -300,7 +301,7 @@ function showContent(content, callback) {
 	if(content.type == 2){
 		window.music = new Audio(`${address}/content/${session.id}/${content.url}`);
 		window.music.addEventListener("loadedmetadata", () => {
-			setTimeout(() => callback(), audio.duration * 1000);
+			setTimeout(() => callback(), window.music.duration * 1000);
 		});
 		window.music.play();
 		if(content.text != null)
