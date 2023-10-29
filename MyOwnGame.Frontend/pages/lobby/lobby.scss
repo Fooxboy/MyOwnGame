@@ -55,9 +55,23 @@
 }
 
 #field {
+	display: flex;
+	flex-direction: column;
 	flex: 1;
 	margin: 30px;
 	height: 1px;
+}
+
+#answer-text {
+	display: none;
+	color: white;
+	font-weight: 600;
+	text-align: center;
+
+	background: #5959cf;
+	border-radius: 10px;
+	padding: 10px;
+	margin-bottom: 10px;
 }
 
 #questions {
@@ -193,6 +207,7 @@
 	width: 100%;
 	height: 100%;
 	display: none;
+	flex: 1;
 	
 	#image-content {
 		width: 100%;
@@ -210,6 +225,7 @@
 	justify-content: center;
 	align-items: center;
 	display: none;
+	flex: 1;
 
 	#text-content {
 		color: white;
@@ -230,6 +246,7 @@
 	justify-content: center;
 	align-items: center;
 	display: none;
+	flex: 1;
 
 	#music-content {
 		display: flex;
@@ -253,82 +270,117 @@
 	gap: 60px;
 
 	padding: 10px 0;
+
+	.player {
+		width: 150px;
+		height: auto;
+		overflow: hidden;
+		
+		display: flex;
+		flex-direction: column;
+
+		&.has-status {
+			.player-status {
+				translate: 0 0%;
+			}
+		}
+
+		.player-status {
+			display: flex;
+			justify-content: center;
+	    	align-items: center;
+	    	box-sizing: border-box;
+
+	    	font-family: FtAnimaRegular;
+	    	font-weight: 600;
+
+			border-radius: 10px 10px 0 0;
+	    	margin-bottom: -10px;
+	    	padding-bottom: 10px;
+	    	z-index: -1;
+
+			height: 45px;
+
+			translate: 0 100%;
+			transition: translate 0.5s ease;
+		}
+
+		.player-info {
+			background: rgba(240, 240, 240, 1);
+			border-radius: 10px;
+			box-shadow: 0 0 2px 3px rgba(0, 0, 0, 0.2);
+
+			.player-image {
+				background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
+				background-size: cover;
+				border-radius: 999px;
+
+				margin: 15px;
+				box-sizing: border-box;
+				aspect-ratio: 1/1;
+			}
+
+			.player-name {
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				overflow: hidden;
+
+				text-align: center;
+				font-size: 14pt;
+				padding: 0 10px 10px 10px;
+			}
+		}
+
+		.player-score {
+			display: flex;
+			justify-content: center;
+	    	align-items: center;
+
+	    	border-radius: 0 0 10px 10px;
+	    	margin-top: -10px;
+	    	padding-top: 10px;
+	    	z-index: -1;
+
+			height: 45px;
+			font-family: segments;
+			border-top: 1.5px solid rgba(0, 0, 0, 0.15);
+
+			background: rgba(0, 60, 0, 1);
+			color: rgba(0, 240, 0, 1);
+			border: 2px solid rgba(0, 80, 0, 1);
+
+			box-sizing: border-box;
+		}
+	}
 }
 
-.player {
-	width: 150px;
-	height: auto;	
-	overflow: hidden;
-	
+
+.right.side-panel {
 	display: flex;
-	flex-direction: column;
+	align-items: flex-end;
+	justify-content: center;
+	padding: 15px;
 
-	&.has-status {
-		.player-status {
-			translate: 0 0%;
-		}
-	}
-
-	.player-status {
+	.answer-button {
+		width: 100%;
+		height: 100px;
 		display: flex;
 		justify-content: center;
-    	align-items: center;
-    	box-sizing: border-box;
+		align-items: center;
 
-    	font-family: FtAnimaRegular;
-    	font-weight: 600;
-
-		border-radius: 10px 10px 0 0;
-    	margin-bottom: -10px;
-    	padding-bottom: 10px;
-    	z-index: -1;
-
-		height: 45px;
-
-		translate: 0 100%;
-		transition: translate 0.5s ease;
-	}
-
-	.player-info {
-		background: rgba(240, 240, 240, 1);
+		color: white;
+		background: grey;
 		border-radius: 10px;
-		box-shadow: 0 0 2px 3px rgba(0, 0, 0, 0.2);
 
-		.player-image {
-			background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
-			background-size: cover;
-			border-radius: 999px;
+		font-family: FtAnimaRegular;
+		font-size: 18pt;
 
-			margin: 15px;
-			box-sizing: border-box;
-			aspect-ratio: 1/1;
+		transition: background ease 0.4s, box-shadow ease 0.4s;
+
+		.can-answer & {
+			background: #de4d43;
+			box-shadow: 0 0 10px 5px #de4d4388;
+			cursor: pointer;
 		}
-
-		.player-name {
-			text-align: center;
-			font-size: 14pt;
-			padding-bottom: 10px;
-		}
-	}
-
-	.player-score {
-		display: flex;
-		justify-content: center;
-    	align-items: center;
-
-    	border-radius: 0 0 10px 10px;
-    	margin-top: -10px;
-    	padding-top: 10px;
-    	z-index: -1;
-
-		height: 45px;
-		font-family: segments;
-		border-top: 1.5px solid rgba(0, 0, 0, 0.15);
-
-		background: rgba(0, 60, 0, 1);
-		color: rgba(0, 240, 0, 1);
-		border: 2px solid rgba(0, 80, 0, 1);
-
-		box-sizing: border-box;
 	}
 }

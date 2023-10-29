@@ -1,6 +1,6 @@
-let audio;
-let isAdmin;
-let canChooseAnswer;
+var audio;
+var isAdmin;
+var canChooseAnswer;
 
 /*
 ======================
@@ -15,6 +15,8 @@ if(session.currentRound)
 	setRound(session.currentRound);
 if(session.selectQuestionPlayer)
 	setPlayerSelecting(session.selectQuestionPlayer);
+if(session.respondingPlayer)
+	setPlayerAnswer(session.respondingPlayer);
 
 // DEBUG
 if(isAdmin){
@@ -23,6 +25,10 @@ if(isAdmin){
 			<div class="button" onclick="requestRound(${i})">${round.name}</div>
 		`;
 	});
+	document.querySelector("#tools").innerHTML += `
+		<div class="button" onclick="connection.invoke('AcceptAnswer')">Верно</div>
+		<div class="button" onclick="connection.invoke('RejectAnswer')">Не верно</div>
+	`;
 }
 
 document.querySelector("#invite-field").value = `${window.location.href}?invite=${session.id}`;
@@ -79,6 +85,8 @@ function addPlayer(player){
 		else
 			setPlayerStatus(player.id, null);
 	}
+
+	updatePlayers();
 }
 
 function removePlayer(player){
@@ -113,13 +121,15 @@ function setRound(roundInfo){
 }
 
 function setPlayerSelecting(player){
-	setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
-	canChooseAnswer = player.id == userId;
-	document.body.classList.toggle("can-choose-price", canChooseAnswer);
+	updatePlayers();
 }
 
 function setPlayerOffline(player){
-	setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
+	updatePlayers();
+}
+
+function setPlayerAnswer(player){
+	updatePlayers();
 }
 
 function showQuestion(question, type, time, position){
@@ -130,6 +140,7 @@ function showQuestion(question, type, time, position){
 	console.log("At position:");
 	console.log(position);
 
+	const answerButton = document.querySelector(".answer-button");
 	const priceElement = document.querySelector(`#theme-${position.themeNumber} #price-${position.questionNumber}`);
 	priceElement.classList.add("selected");
 
@@ -137,6 +148,24 @@ function showQuestion(question, type, time, position){
 		priceElement.classList.remove("selected");
 		processQuestionPart(question, 0);
 	}, 1000);
+
+	const seconds = 5;
+	for(let i = seconds; i >= 1; i--)
+		setTimeout(() => answerButton.innerHTML = i, 1000 * (seconds - i));
+	updatePlayers();
+}
+
+function canAnswer(can){
+	document.body.classList.toggle("can-answer", can);
+	document.querySelector(".answer-button").innerHTML = "Ответить";
+}
+
+function showAdminAnswer(answer){
+	setAnswerText(answer.text);
+}
+
+function acceptAnswer(player, score, answer) {
+	showAnswer(answer);
 }
 
 /*
@@ -144,6 +173,49 @@ function showQuestion(question, type, time, position){
 	  Functions
 ======================
 */
+
+function requestUpdateSession(){
+	const id = parseInt(session.id);
+	return connection.invoke("GetSession", id)
+	.then(result => {
+		session = result;
+		session.id = id;
+		return this;
+	});
+}
+
+function getCachedPlayer(player){
+	return session.players.filter(p2 => p2.id == player.id);
+}
+
+function updatePlayers() {
+	requestUpdateSession().then(() => {
+		session.players.forEach(player => {
+			let profilePane = document.querySelector(`#player-${player.id}`);
+			const imageUrl = `${address}/avatars/${player.avatarImage}`;
+			if(profilePane){
+				profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
+				profilePane.querySelector(".player-name").innerHTML = player.name;
+				profilePane.querySelector(".player-score").innerHTML = player.score;
+			}
+
+			if(session.respondingPlayer && 
+				player.id == session.respondingPlayer.id)
+				setPlayerStatus(player.id, "отвечает", "rgba(240, 240, 100, 1)", "rgba(120, 120, 0, 1)");
+			
+			else if(player.isDisconnected)
+				setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
+			
+			else if(session.selectQuestionPlayer && 
+				session.state == 4 &&
+				player.id == session.selectQuestionPlayer.id) {
+				setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
+				canChooseAnswer = player.id == userId;
+				document.body.classList.toggle("can-choose-price", canChooseAnswer);
+			} else setPlayerStatus(player.id, null, null, null);
+		});
+	});
+}
 
 function getPlayerStatus(id){
 	return document.querySelector(`#player-${id} .player-status`)?.innerHTML;
@@ -169,40 +241,73 @@ function requestPrice(theme, price){
 	connection.invoke("SelectQuestion", theme, price);
 }
 
+function requestAnswer(){
+	connection.invoke("ReadyToAnswer", new Date().toISOString());
+}
+
 function setVolume(volume){
 	audio.volume = volume / 100;
 }
 
-function processQuestionPart(parts, i){
-	if(i == parts.length){
-		return;
-	}
-	const part = parts[i];
+function setAnswerText(text){
+	const textElement = document.querySelector("#answer-text");
+	textElement.style.display = text ? "block" : "none";
+	textElement.innerHTML = text;
+}
 
+function processQuestionPart(parts, i){
+	if(i == parts.length)
+		return;
+	showContent(parts[i], () => processQuestionPart(parts, i+1));
+}
+
+function showContent(content, callback) {
 	const questions = document.querySelector(`#questions`);
 	const imageQuestion = document.querySelector(`#image-question`);
 	const textQuestion = document.querySelector(`#text-question`);
 	const musicQuestion = document.querySelector(`#music-question`);
 
-	questions.style.display = "none";
-	textQuestion.style.display = part.type == 1 ? "flex" : "none";
-	musicQuestion.style.display = part.type == 2 ? "flex" : "none";
-	imageQuestion.style.display = part.type == 3 ? "flex" : "none";
-
-	if(part.type == 1){
-		textQuestion.querySelector(`#text-content`).textContent = part.text;
-		setTimeout(() => processQuestionPart(parts, i+1), part.text.length * 200);
+	if(content == null){
+		questions.style.display = "flex";
+		textQuestion.style.display = "none";
+		musicQuestion.style.display = "none";
+		imageQuestion.style.display = "none";
+		setAnswerText(null);
+		return;
 	}
-	if(part.type == 2){
-		audio = new Audio(`${address}/content/${session.id}/${part.url}`);
+
+	questions.style.display = "none";
+	textQuestion.style.display = content.type == 1 ? "flex" : "none";
+	musicQuestion.style.display = content.type == 2 ? "flex" : "none";
+	imageQuestion.style.display = content.type == 3 ? "flex" : "none";
+
+	if(content.type == 1){
+		textQuestion.querySelector(`#text-content`).textContent = content.text;
+		setTimeout(() => callback(), content.text.length * 200);
+		
+	}
+	if(content.type == 2){
+		audio = new Audio(`${address}/content/${session.id}/${content.url}`);
 		audio.addEventListener("loadedmetadata", () => {
-			setTimeout(() => processQuestionPart(parts, i+1), audio.duration * 1000);
+			setTimeout(() => callback(), audio.duration * 1000);
 		});
 		audio.play();
+		if(content.text != null)
+			setAnswerText(content.text);
 	}
-	if(part.type == 3){
+	if(content.type == 3){
 		imageQuestion.querySelector(`#image-content`).style.backgroundImage 
-			= `url("${address}/content/${session.id}/${part.url}")`;
-		setTimeout(() => processQuestionPart(parts, i+1), 3000);
+			= `url("${address}/content/${session.id}/${content.url}")`;
+		setTimeout(() => callback(), 3000);
+		if(content.text != null)
+			setAnswerText(content.text);
 	}
+}
+
+function showAnswer(answer) {
+	setAnswerText(answer.text);
+	showContent(answer, () => {
+		showContent(null, null);
+	});
+	updatePlayers();
 }

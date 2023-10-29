@@ -50,7 +50,8 @@ function loadAccountFromCookie(){
 			setPage("main");
 	}
 	else {
-		document.body.style.setProperty("--user-image", `url("${window.location.href}resources/empty-user-icon.png")`);
+		const baseUrl = location.protocol + '//' + location.host + location.pathname;
+		document.body.style.setProperty("--user-image", `url("${baseUrl}resources/empty-user-icon.png")`);
 		setPage("login");
 	}
 }
@@ -117,6 +118,11 @@ async function connectToSession(sessionId){
 		connection.on("ChangeSelectQuestionPlayer", player => setPlayerSelecting(player));
 		connection.on("PlayerOffline", player => setPlayerOffline(player));
 		connection.on("QuestionSelected", (question, type, time, position) => showQuestion(question, type, time, position));
+		connection.on("PlayerCanAnswer", () => canAnswer(true));
+		connection.on("PlayerAnswer", player => setPlayerAnswer(player));
+		connection.on("QuestionSelectedAdmin", answer => showAdminAnswer(answer));
+		connection.on("AcceptAnswer", (player, score, answer) => acceptAnswer(player, score, answer));
+
 
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);
