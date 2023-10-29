@@ -10,7 +10,7 @@ public class CatQuestionParser : BasePackQuestionParser
     {
         var info = base.ParseInfo(question);
 
-        if (info.Type != QuestionPackType.Cat)
+        if (info.Type != QuestionPackType.Cat || info.Type != QuestionPackType.SuperCat)
         {
             return info;
         }
