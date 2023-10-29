@@ -19,13 +19,9 @@ namespace MyOwnGame.Backend
 
             builder.WebHost.UseKestrel(serverOptions =>
             {
-                var services = serverOptions.ApplicationServices;
                 serverOptions.ListenAnyIP(3000, options =>
                 {
-                    options.UseHttps(h =>
-                    {
-                        h.UseLettuceEncrypt(services);
-                    });
+                    options.UseHttps("fooxboy.ru.pfx", "fooxboy");
                 });
             });
             // Add services to the container.
@@ -36,8 +32,6 @@ namespace MyOwnGame.Backend
             builder.Services.AddSwaggerGen();
             builder.Services.AddSignalR();
             builder.Services.AddMemoryCache();
-            
-            
             
             builder.Services.AddSingleton<SessionsManager>();
             
@@ -77,7 +71,7 @@ namespace MyOwnGame.Backend
                 });
             });
 
-            builder.Services.AddLettuceEncrypt();
+            //builder.Services.AddLettuceEncrypt();
             builder.Logging.ClearProviders();
             builder.Host.UseNLog();
 
