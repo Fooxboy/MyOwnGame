@@ -25,9 +25,6 @@
 
 
 
-  <ItemGroup>
-    <Folder Include="Infrastructure\" />
-  </ItemGroup>
 
   </ItemGroup>
 
