@@ -1,9 +1,11 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Frontend
 
 on:
   # Runs on pushes targeting the default branch
   push:
+    paths:
+      - 'MyOwnGame.Frontend/**'
     branches: ['master']
 
   # Allows you to run this workflow manually from the Actions tab
@@ -28,22 +30,22 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Подготовка
         uses: actions/checkout@v3
-      - name: Set up Node
+      - name: Подготовка Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Install Harp
+      - name: Установка Harp
         run: npm install -g harp
-      - name: Build
+      - name: Сборка
         run: harp ./MyOwnGame.Frontend ./dist
-      - name: Setup Pages
+      - name: Настройка pages
         uses: actions/configure-pages@v3
-      - name: Upload artifact
+      - name: Загрузка файлов
         uses: actions/upload-pages-artifact@v1
         with:
           path: './dist'
-      - name: Deploy to GitHub Pages
+      - name: Деплой Pages
         id: deployment
         uses: actions/deploy-pages@v1
