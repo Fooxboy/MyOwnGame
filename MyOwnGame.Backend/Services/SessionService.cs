@@ -355,8 +355,6 @@ public class SessionService
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
         
-        session.ResetSelectQuestionPlayer();
-
         await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
             questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
 
