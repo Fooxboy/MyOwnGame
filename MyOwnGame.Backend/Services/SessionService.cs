@@ -185,6 +185,13 @@ public class SessionService
         return _sessionsManager.GetPlayer(connectionId);
     }
 
+    public async Task<Session> GetSession(long sessionId, string connectionId)
+    {
+        var session = _sessionsManager.GetSessionById(sessionId);
+
+        return session;
+    } 
+
     public async Task ChangeRound(int roundPosition, string connectionId)
     {
         var player = GetPlayer(connectionId);

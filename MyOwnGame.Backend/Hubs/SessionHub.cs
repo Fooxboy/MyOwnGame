@@ -57,6 +57,21 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task<SessionDto> GetSession(long sessionId)
+    {
+        try
+        {
+            var session = await _sessionService.GetSession(sessionId, Context.ConnectionId);
+
+            return SessionDto.Create(session);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public async Task ChangeRound(int roundNumber)
     {
         try
