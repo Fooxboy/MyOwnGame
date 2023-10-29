@@ -254,6 +254,11 @@ function processQuestionPart(parts, i){
 }
 
 function showContent(content, callback) {
+	const questions = document.querySelector(`#questions`);
+	const imageQuestion = document.querySelector(`#image-question`);
+	const textQuestion = document.querySelector(`#text-question`);
+	const musicQuestion = document.querySelector(`#music-question`);
+
 	if(content == null){
 		questions.style.display = "flex";
 		textQuestion.style.display = "none";
@@ -261,11 +266,6 @@ function showContent(content, callback) {
 		imageQuestion.style.display = "none";
 		return;
 	}
-
-	const questions = document.querySelector(`#questions`);
-	const imageQuestion = document.querySelector(`#image-question`);
-	const textQuestion = document.querySelector(`#text-question`);
-	const musicQuestion = document.querySelector(`#music-question`);
 
 	questions.style.display = "none";
 	textQuestion.style.display = content.type == 1 ? "flex" : "none";
