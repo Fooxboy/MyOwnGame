@@ -264,6 +264,7 @@ function showContent(content, callback) {
 		textQuestion.style.display = "none";
 		musicQuestion.style.display = "none";
 		imageQuestion.style.display = "none";
+		setAnswerText(null);
 		return;
 	}
 
