@@ -17,6 +17,17 @@ namespace MyOwnGame.Backend
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.UseKestrel(serverOptions =>
+            {
+                var services = serverOptions.ApplicationServices;
+                serverOptions.ListenAnyIP(3000, options =>
+                {
+                    options.UseHttps(h =>
+                    {
+                        h.UseLettuceEncrypt(services);
+                    });
+                });
+            });
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -25,6 +36,8 @@ namespace MyOwnGame.Backend
             builder.Services.AddSwaggerGen();
             builder.Services.AddSignalR();
             builder.Services.AddMemoryCache();
+            
+            
             
             builder.Services.AddSingleton<SessionsManager>();
             
@@ -84,7 +97,7 @@ namespace MyOwnGame.Backend
 
             app.UseCors("any");
 
-            app.Run("https://0.0.0.0:3000");
+            app.Run();
         }
     }
 }
