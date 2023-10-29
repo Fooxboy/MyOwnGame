@@ -216,6 +216,15 @@ public class SessionService
             throw new Exception("Ошибка при смене раунда");
         }
 
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия");
+        }
+        
+        session.ChangeStateToTable();
+        
         await _callbackService.RoundChanged(player.SessionId, roundInfo.RoundInfo);
 
         await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, roundInfo.QuestionPlayer);
