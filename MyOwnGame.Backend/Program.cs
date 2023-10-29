@@ -63,7 +63,8 @@ namespace MyOwnGame.Backend
                         .AllowAnyMethod();
                 });
             });
-            
+
+            builder.Services.AddLettuceEncrypt();
             builder.Logging.ClearProviders();
             builder.Host.UseNLog();
 
@@ -83,7 +84,7 @@ namespace MyOwnGame.Backend
 
             app.UseCors("any");
 
-            app.Run("http://0.0.0.0:3000");
+            app.Run("https://0.0.0.0:3000");
         }
     }
 }
