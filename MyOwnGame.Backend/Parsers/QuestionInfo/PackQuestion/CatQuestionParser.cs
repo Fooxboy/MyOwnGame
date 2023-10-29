@@ -9,11 +9,7 @@ public class CatQuestionParser : BasePackQuestionParser
     public override QuestionPackInfo ParseInfo(Question question)
     {
         var info = base.ParseInfo(question);
-
-        if (info.Type != QuestionPackType.Cat || info.Type != QuestionPackType.SuperCat)
-        {
-            return info;
-        }
+        
 
         var catInfo = new CatInfo();
 
