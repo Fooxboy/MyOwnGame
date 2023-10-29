@@ -18,7 +18,12 @@ function setPage(page){
 
 		// Script
 		fetch(`pages/${page}/${page}.js`)
-		.then(a => a.text())
+		.then(response => {
+			if (!response.ok)
+				throw new Error("Not 2xx response", {cause: response});
+			return a.text();
+		})
+		.catch(a => console.log(`pages/${page}/${page}.js - Not found`))
 		.then(response => {
 			const script = document.createElement("script");
 			script.id = "dynamic-page-style";
@@ -28,6 +33,7 @@ function setPage(page){
 			if(oldScript) 
 				document.head.removeChild(oldScript);
 			document.head.appendChild(script);
-		});
+		})
+		;
 	});
 }

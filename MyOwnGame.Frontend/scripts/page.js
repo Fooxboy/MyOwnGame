@@ -49,7 +49,10 @@ function loadAccountFromCookie(){
 		else
 			setPage("main");
 	}
-	else setPage("login");
+	else {
+		document.body.style.setProperty("--user-image", `url("${window.location.href}resources/empty-user-icon.png")`);
+		setPage("login");
+	}
 }
 
 function createAccount(){
