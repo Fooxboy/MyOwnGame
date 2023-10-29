@@ -23,8 +23,10 @@ public class MultipleQuestionParser : IQuestionParser
                     return questions;
                 case "say":
                     questions.Add(new TextQuestion(){ Text = atom.Text, Type = QuestionContentType.Text });
-                
-                    continue;
+                    break;
+                case null:
+                    questions.Add(new TextQuestion() { Text = atom.Text, Type = QuestionContentType.Text});
+                    break;
                 default:
                     questions.Add(new MediaQuestion()
                     {
