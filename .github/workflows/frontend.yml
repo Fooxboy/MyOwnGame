@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Загрузка сайта на github pages
+name: Frontend
 
 on:
   # Runs on pushes targeting the default branch
