@@ -243,7 +243,7 @@ function setVolume(volume){
 
 function setAnswerText(text){
 	const textElement = document.querySelector("#answer-text");
-	textElement.style.display = text ? "none" : "block";
+	textElement.style.display = text ? "block" : "none";
 	textElement.innerHTML = text;
 }
 
@@ -274,7 +274,7 @@ function showContent(content, callback) {
 
 	if(content.type == 1){
 		textQuestion.querySelector(`#text-content`).textContent = content.text;
-		setTimeout(() => callback(), part.text.length * 200);
+		setTimeout(() => callback(), content.text.length * 200);
 		setAnswerText(null);
 	}
 	if(content.type == 2){
