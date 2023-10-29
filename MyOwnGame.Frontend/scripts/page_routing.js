@@ -8,10 +8,13 @@ function setPage(page){
 		link.rel = "stylesheet";
 		link.id = "dynamic-page-style";
 
+
+
 		const oldLink = document.head.querySelector("link#dynamic-page-style");
 		if(oldLink)
 			document.head.removeChild(oldLink);
 		document.head.appendChild(link);
+		
 
 		// Html
 		document.body.innerHTML = response;
