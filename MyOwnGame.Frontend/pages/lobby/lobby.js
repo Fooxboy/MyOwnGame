@@ -1,4 +1,4 @@
-var audio;
+//var window.music;
 var isAdmin;
 var canChooseAnswer;
 
@@ -28,6 +28,7 @@ if(isAdmin){
 	document.querySelector("#tools").innerHTML += `
 		<div class="button" onclick="connection.invoke('AcceptAnswer')">Верно</div>
 		<div class="button" onclick="connection.invoke('RejectAnswer')">Не верно</div>
+		<div class="button" onclick="connection.invoke('SkipQuestion')">Скип</div>
 	`;
 }
 
@@ -168,6 +169,14 @@ function acceptAnswer(player, score, answer) {
 	showAnswer(answer);
 }
 
+function rejectAnswer(player, score, answer) {
+	updatePlayers(); // TODO: Animation
+}
+
+function skipQuestion(answer) {
+	showAnswer(answer);
+}
+
 /*
 ======================
 	  Functions
@@ -246,7 +255,7 @@ function requestAnswer(){
 }
 
 function setVolume(volume){
-	audio.volume = volume / 100;
+	window.music.volume = volume / 100;
 }
 
 function setAnswerText(text){
@@ -273,6 +282,8 @@ function showContent(content, callback) {
 		musicQuestion.style.display = "none";
 		imageQuestion.style.display = "none";
 		setAnswerText(null);
+		if(window.music)
+			window.music.pause();
 		return;
 	}
 
@@ -287,11 +298,11 @@ function showContent(content, callback) {
 		
 	}
 	if(content.type == 2){
-		audio = new Audio(`${address}/content/${session.id}/${content.url}`);
-		audio.addEventListener("loadedmetadata", () => {
+		window.music = new Audio(`${address}/content/${session.id}/${content.url}`);
+		window.music.addEventListener("loadedmetadata", () => {
 			setTimeout(() => callback(), audio.duration * 1000);
 		});
-		audio.play();
+		window.music.play();
 		if(content.text != null)
 			setAnswerText(content.text);
 	}
