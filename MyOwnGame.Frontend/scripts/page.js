@@ -125,6 +125,7 @@ async function connectToSession(sessionId){
 		connection.on("RejectAnswer", (player, score, answer) => rejectAnswer(player, score, answer));
 		connection.on("SkipQuestion", answer => skipQuestion(answer));
 
+
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);
 		setPage("lobby");
