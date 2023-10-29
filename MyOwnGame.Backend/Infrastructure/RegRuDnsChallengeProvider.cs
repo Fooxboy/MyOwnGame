@@ -2,5 +2,8 @@
 
 public class RegRuDnsChallengeProvider
 {
-    
+    public RegRuDnsChallengeProvider()
+    {
+        
+    }
 }
