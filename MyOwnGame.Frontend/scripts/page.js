@@ -120,8 +120,8 @@ async function connectToSession(sessionId){
 		connection.on("QuestionSelected", (question, type, time, position) => showQuestion(question, type, time, position));
 		connection.on("PlayerCanAnswer", () => canAnswer(true));
 		connection.on("PlayerAnswer", player => setPlayerAnswer(player));
-		connection.on("QuestionSelectedAdmin", answer => console.log(answer));
-
+		connection.on("QuestionSelectedAdmin", answer => showAdminAnswer(answer));
+		connection.on("AcceptAnswer", (player, score, answer) => acceptAnswer(player, score, answer));
 
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);

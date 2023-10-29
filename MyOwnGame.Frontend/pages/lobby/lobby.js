@@ -160,6 +160,14 @@ function canAnswer(can){
 	document.querySelector(".answer-button").innerHTML = "Ответить";
 }
 
+function showAdminAnswer(answer){
+	setAnswerText(answer.text);
+}
+
+function acceptAnswer(player, score, answer) {
+	showAnswer(answer);
+}
+
 /*
 ======================
 	  Functions
@@ -233,11 +241,26 @@ function setVolume(volume){
 	audio.volume = volume / 100;
 }
 
+function setAnswerText(text){
+	const textElement = document.querySelector("#answer-text");
+	textElement.style.display = text ? "none" : "block";
+	textElement.innerHTML = text;
+}
+
 function processQuestionPart(parts, i){
-	if(i == parts.length){
+	if(i == parts.length)
+		return;
+	showContent(parts[i], () => processQuestionPart(parts, i+1));
+}
+
+function showContent(content, callback) {
+	if(content == null){
+		questions.style.display = "flex";
+		textQuestion.style.display = "none";
+		musicQuestion.style.display = "none";
+		imageQuestion.style.display = "none";
 		return;
 	}
-	const part = parts[i];
 
 	const questions = document.querySelector(`#questions`);
 	const imageQuestion = document.querySelector(`#image-question`);
@@ -245,24 +268,37 @@ function processQuestionPart(parts, i){
 	const musicQuestion = document.querySelector(`#music-question`);
 
 	questions.style.display = "none";
-	textQuestion.style.display = part.type == 1 ? "flex" : "none";
-	musicQuestion.style.display = part.type == 2 ? "flex" : "none";
-	imageQuestion.style.display = part.type == 3 ? "flex" : "none";
+	textQuestion.style.display = content.type == 1 ? "flex" : "none";
+	musicQuestion.style.display = content.type == 2 ? "flex" : "none";
+	imageQuestion.style.display = content.type == 3 ? "flex" : "none";
 
-	if(part.type == 1){
-		textQuestion.querySelector(`#text-content`).textContent = part.text;
-		setTimeout(() => processQuestionPart(parts, i+1), part.text.length * 200);
+	if(content.type == 1){
+		textQuestion.querySelector(`#text-content`).textContent = content.text;
+		setTimeout(() => callback(), part.text.length * 200);
+		setAnswerText(null);
 	}
-	if(part.type == 2){
-		audio = new Audio(`${address}/content/${session.id}/${part.url}`);
+	if(content.type == 2){
+		audio = new Audio(`${address}/content/${session.id}/${content.url}`);
 		audio.addEventListener("loadedmetadata", () => {
-			setTimeout(() => processQuestionPart(parts, i+1), audio.duration * 1000);
+			setTimeout(() => callback(), audio.duration * 1000);
 		});
 		audio.play();
+		if(content.text != null)
+			setAnswerText(content.text);
 	}
-	if(part.type == 3){
+	if(content.type == 3){
 		imageQuestion.querySelector(`#image-content`).style.backgroundImage 
-			= `url("${address}/content/${session.id}/${part.url}")`;
-		setTimeout(() => processQuestionPart(parts, i+1), 3000);
+			= `url("${address}/content/${session.id}/${content.url}")`;
+		setTimeout(() => callback(), 3000);
+		if(content.text != null)
+			setAnswerText(content.text);
 	}
+}
+
+function showAnswer(answer) {
+	setAnswerText(answer.text);
+	showContent(answer, () => {
+		showContent(null, null);
+	});
+	updatePlayers();
 }
