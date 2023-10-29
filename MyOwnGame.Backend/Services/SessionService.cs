@@ -354,6 +354,8 @@ public class SessionService
         DelayTaskRunner.Run(seconds, () => _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
+        
+        session.ResetSelectQuestionPlayer();
 
         await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
             questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
