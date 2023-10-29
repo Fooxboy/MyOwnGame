@@ -45,7 +45,7 @@ public enum SessionEvents
     /// <summary>
     /// Игрок попытался ответить
     /// </summary>
-    PlayerTryedAnswer,
+    PlayerTriedAnswer,
     
     /// <summary>
     /// Игрок дал верный ответ

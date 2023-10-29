@@ -365,7 +365,7 @@ public class SessionService
 
         if (session.State != SessionState.Question || session.ReadyToAnswerTime > DateTime.UtcNow || session.RespondingPlayer is not null)
         {
-            await _callbackService.PlayerTryedAnswer(player.SessionId, player);
+            await _callbackService.PlayerTriedAnswer(player.SessionId, player);
             return;
         }
 
