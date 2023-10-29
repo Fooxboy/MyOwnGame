@@ -4,7 +4,7 @@ function setPage(page){
 	.then(response => {
 		// Style
 		const link = document.createElement("link");
-		link.href = `pages/${page}/${page}.scss`;
+		link.href = `pages/${page}/${page}.css`;
 		link.rel = "stylesheet";
 		link.id = "dynamic-page-style";
 

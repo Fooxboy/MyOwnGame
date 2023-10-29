@@ -1,16 +1,16 @@
 @font-face {
 	font-family: FtAnimaRegular;
-	src: url(fonts/FtAnimaRegular.otf);
+	src: url(resources/fonts/FtAnimaRegular.otf);
 }
 
 @font-face {
 	font-family: Led;
-	src: url(fonts/led_8x6.ttf);
+	src: url(resources/fonts/led_8x6.ttf);
 }
 
 @font-face {
 	font-family: Segments;
-	src: url(fonts/segments.ttf);
+	src: url(resources/fonts/segments.ttf);
 }
 
 * {
@@ -24,7 +24,7 @@ html, body {
 }
 
 body {
-	--user-image: url("/empty-user-icon.png");
+	--user-image: url("resources/empty-user-icon.png");
 
 	--background: white;
 	--button: rgb(26, 108, 254);
@@ -34,7 +34,7 @@ body {
 	--textfield: white;
 	--textfield-border: 1.5px solid rgb(26, 108, 254);
 
-	background: url("/background.jpg");
+	background: url("resources/background.jpg");
 	background-size: cover;
 	backdrop-filter: blur(20px);
 }
