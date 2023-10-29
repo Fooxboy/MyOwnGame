@@ -6,7 +6,7 @@ public static class DelayTaskRunner
     {
         Task.Run(async () =>
         {
-            await Task.Delay(time);
+            await Task.Delay(time * 1000);
             
             await action();
         });

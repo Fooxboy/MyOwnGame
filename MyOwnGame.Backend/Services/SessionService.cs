@@ -335,7 +335,7 @@ public class SessionService
         //simple
         var seconds = session.ChangeStateToQuestion(questionInfo.Questions.Count);
         
-        DelayTaskRunner.Run(seconds, async () => await _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
+        DelayTaskRunner.Run(seconds, () => _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
 
