@@ -123,6 +123,7 @@ async function connectToSession(sessionId){
 		connection.on("QuestionSelectedAdmin", answer => showAdminAnswer(answer));
 		connection.on("AcceptAnswer", (player, score, answer) => acceptAnswer(player, score, answer));
 
+
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);
 		setPage("lobby");
