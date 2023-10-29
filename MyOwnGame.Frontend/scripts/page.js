@@ -122,6 +122,7 @@ async function connectToSession(sessionId){
 		connection.on("PlayerAnswer", player => setPlayerAnswer(player));
 		connection.on("QuestionSelectedAdmin", answer => console.log(answer));
 
+
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);
 		setPage("lobby");
