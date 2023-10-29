@@ -337,6 +337,7 @@ public class SessionService
             //Если это аукцион - возвращаем инфу о том что выбран вопрос, но без вопросов.
             if (questionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
             {
+                
                 await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
 
                 await _callbackService.QuestionSelected(currentPlayer.SessionId, new List<QuestionBase>(),
