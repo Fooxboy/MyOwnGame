@@ -185,6 +185,13 @@ public class SessionService
         return _sessionsManager.GetPlayer(connectionId);
     }
 
+    public async Task<Session> GetSession(long sessionId, string connectionId)
+    {
+        var session = _sessionsManager.GetSessionById(sessionId);
+
+        return session;
+    } 
+
     public async Task ChangeRound(int roundPosition, string connectionId)
     {
         var player = GetPlayer(connectionId);
@@ -209,6 +216,15 @@ public class SessionService
             throw new Exception("Ошибка при смене раунда");
         }
 
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия");
+        }
+        
+        session.ChangeStateToTable();
+        
         await _callbackService.RoundChanged(player.SessionId, roundInfo.RoundInfo);
 
         await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, roundInfo.QuestionPlayer);
@@ -338,6 +354,8 @@ public class SessionService
         DelayTaskRunner.Run(seconds, () => _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
 
         session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
+        
+        session.ResetSelectQuestionPlayer();
 
         await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
             questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
@@ -365,7 +383,7 @@ public class SessionService
 
         if (session.State != SessionState.Question || session.ReadyToAnswerTime > DateTime.UtcNow || session.RespondingPlayer is not null)
         {
-            await _callbackService.PlayerTryedAnswer(player.SessionId, player);
+            await _callbackService.PlayerTriedAnswer(player.SessionId, player);
             return;
         }
 

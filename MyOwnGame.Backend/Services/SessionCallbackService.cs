@@ -84,9 +84,9 @@ public class SessionCallbackService
             PlayerDto.Create(player));
     }
 
-    public async Task PlayerTryedAnswer(long sessionId, Player player)
+    public async Task PlayerTriedAnswer(long sessionId, Player player)
     {
-        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.PlayerTryedAnswer.ToString(),
+        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.PlayerTriedAnswer.ToString(),
             PlayerDto.Create(player));
     }
 
