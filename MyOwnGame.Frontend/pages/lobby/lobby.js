@@ -191,6 +191,14 @@ function getCachedPlayer(player){
 function updatePlayers() {
 	requestUpdateSession().then(() => {
 		session.players.forEach(player => {
+			let profilePane = document.querySelector(`#player-${player.id}`);
+			const imageUrl = `${address}/avatars/${player.avatarImage}`;
+			if(profilePane){
+				profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
+				profilePane.querySelector(".player-name").innerHTML = player.name;
+				profilePane.querySelector(".player-score").innerHTML = player.score;
+			}
+
 			if(session.respondingPlayer && 
 				player.id == session.respondingPlayer.id)
 				setPlayerStatus(player.id, "отвечает", "rgba(240, 240, 100, 1)", "rgba(120, 120, 0, 1)");
@@ -276,7 +284,7 @@ function showContent(content, callback) {
 	if(content.type == 1){
 		textQuestion.querySelector(`#text-content`).textContent = content.text;
 		setTimeout(() => callback(), content.text.length * 200);
-		setAnswerText(null);
+		
 	}
 	if(content.type == 2){
 		audio = new Audio(`${address}/content/${session.id}/${content.url}`);
