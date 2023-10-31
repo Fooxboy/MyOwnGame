@@ -649,6 +649,8 @@ public class SessionService
         }
 
         var nextPlayer = session.Players[indexPlayer];
+
+        session.SetSelectQuestionPlayer(nextPlayer);
       
         await _callbackService.FinalThemeRemoved(player.SessionId, session.CurrentRound.Themes);
         await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, nextPlayer);
