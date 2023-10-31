@@ -649,9 +649,23 @@ public class SessionService
         }
 
         var nextPlayer = session.Players[indexPlayer];
-
+      
         await _callbackService.FinalThemeRemoved(player.SessionId, session.CurrentRound.Themes);
         await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, nextPlayer);
+        
+        if (session.CurrentRound.Themes.Count == 1)
+        {
+            var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
+
+            var question =
+                currentRound.Themes.Theme.FirstOrDefault(x => session.CurrentRound.Themes.FirstOrDefault().Name == x.Name).Questions.Question.FirstOrDefault();
+
+            var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
+
+            var questionInfo = _questionParser.Parse(question);
+            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, new QuestionPackInfo(), 0, 0, 0);
+            await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
+        }
     }
 
     public async Task SendFinalAnswer(string message, int price, string connectionId)

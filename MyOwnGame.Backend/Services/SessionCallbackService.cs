@@ -120,6 +120,7 @@ public class SessionCallbackService
         await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(
             SessionEvents.FinalThemeRemoved.ToString(), themes);
     }
+    
 
     public async Task GamePaused(long sessionId, Session session)
     {
