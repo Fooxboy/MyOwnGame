@@ -454,6 +454,8 @@ public class SessionService
                 player.RemoveScore(selectedQuestion.Price);
             }
             
+            session.ResetRespondingPlayer();
+            
             session.ChangeStateToAnswer();
 
             await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
@@ -630,25 +632,26 @@ public class SessionService
         
         session.RemoveTheme(position);
 
-        var indexPlayer = session.Players.IndexOf(player);
+        var onlinePlayers = session.Players.Where(p => !p.IsAdmin && !p.IsDisconnected).ToList();
+
+        var indexPlayer = onlinePlayers.IndexOf(player);
         
         if (indexPlayer == -1)
         {
             throw new Exception("ВСЕ СЛОМАЛОСЬ, Я ОБОСРАЛСЯ С ИНДЕКСОМ НУЖНА ПОПРАВИТЬ!!!!");
         }
-
+        
         indexPlayer++;
 
-        var newPlayer = session.Players[indexPlayer];
-
-        if (newPlayer.IsAdmin)
+        if (onlinePlayers.Count == indexPlayer)
         {
-            indexPlayer++;
-            newPlayer = session.Players[indexPlayer];
+            indexPlayer = 0;
         }
 
+        var nextPlayer = session.Players[indexPlayer];
+
         await _callbackService.FinalThemeRemoved(player.SessionId, session.CurrentRound.Themes);
-        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, newPlayer);
+        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, nextPlayer);
     }
 
     public async Task SendFinalAnswer(string message, int price, string connectionId)
