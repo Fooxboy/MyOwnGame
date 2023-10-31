@@ -156,7 +156,7 @@
 				color: rgba(120, 120, 120, 1.0);
 			}
 
-			.can-choose-price &:hover{
+			.can-choose-price &:hover:not(.answered){
 				background: rgba(240, 240, 240, 1);
 				cursor: pointer;
 			}
@@ -309,9 +309,9 @@
 			background: rgba(240, 240, 240, 1);
 			border-radius: 10px;
 			box-shadow: 0 0 2px 3px rgba(0, 0, 0, 0.2);
+			z-index: 1;
 
 			.player-image {
-				background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
 				background-size: cover;
 				border-radius: 999px;
 
@@ -339,7 +339,6 @@
 	    	border-radius: 0 0 10px 10px;
 	    	margin-top: -10px;
 	    	padding-top: 10px;
-	    	z-index: -1;
 
 			height: 45px;
 			font-family: segments;
@@ -350,6 +349,21 @@
 			border: 2px solid rgba(0, 80, 0, 1);
 
 			box-sizing: border-box;
+			user-select: none;
+
+			&.changed {
+				animation: 0.5s ease selectedAnimation;
+			}
+
+			@keyframes selectedAnimation {
+				50% {
+					font-size: 17pt;
+					color: lightgreen;
+				}
+				100% {
+					font-size: 12pt;
+				}
+			}
 		}
 	}
 }

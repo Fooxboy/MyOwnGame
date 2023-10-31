@@ -76,8 +76,10 @@ function addPlayer(player){
 			`;
 		}
 		profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
-		profilePane.querySelector(".player-name").innerHTML = player.name;
-		profilePane.querySelector(".player-score").innerHTML = player.score;
+		profilePane.querySelector(".player-name").innerHTML = player.name;;
+		const scoreElement = profilePane.querySelector(".player-score")
+		scoreElement.innerHTML = player.score;
+		scoreElement.addEventListener("click", () => editPlayerScore(session.players.find(a => a.id == player.id)));
 		
 		if(player.isDisconnected)
 			setPlayerOffline(player);
@@ -112,9 +114,18 @@ function setRound(roundInfo){
 		`;
 
 		theme.prices.forEach((price, r) => {
-			themePanel.innerHTML += `
-				<div class="price ${price.isAnswered ? "answered" : ""}" id="price-${r}" onclick="requestPrice(${i}, ${r})">${roundInfo.isFinal ? "удалить" : price.price}</div>
-			`;
+			const button = document.createElement("div");
+			button.id = `price-${r}`;
+			button.classList.add("price");
+			button.classList.toggle("answered", price.isAnswered);
+			button.addEventListener("click", () => {
+				if(roundInfo.isFinal)
+					requestRemoveTheme(i);
+				else if(!price.isAnswered)
+					requestPrice(i, r)
+			});
+			button.textContent = roundInfo.isFinal ? "удалить" : price.price;
+			themePanel.appendChild(button);
 		});
 	});
 
@@ -178,6 +189,16 @@ function skipQuestion(answer) {
 	showAnswer(answer);
 }
 
+function updateScore(player, score){
+	updatePlayers();
+}
+
+function finalThemeRemoved(themes){
+	setRound({
+		themes: themes
+	});
+}
+
 /*
 ======================
 	  Functions
@@ -206,7 +227,12 @@ function updatePlayers() {
 			if(profilePane){
 				profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
 				profilePane.querySelector(".player-name").innerHTML = player.name;
-				profilePane.querySelector(".player-score").innerHTML = player.score;
+				const scoreElement = profilePane.querySelector(".player-score");
+				if(scoreElement.textContent != player.score){
+					scoreElement.classList.add("changed");
+					setTimeout(() => scoreElement.classList.remove("changed"), 1000);
+				}
+				scoreElement.innerHTML = player.score;
 			}
 
 			if(session.respondingPlayer && 
@@ -253,6 +279,11 @@ function requestPrice(theme, price){
 
 function requestAnswer(){
 	connection.invoke("ReadyToAnswer", new Date().toISOString());
+}
+
+function requestRemoveTheme(themeId){
+	console.log(`Removing theme: ${themeId}`);
+	connection.invoke("RemoveFinalTheme", parseInt(themeId));
 }
 
 function setVolume(volume){
@@ -322,4 +353,12 @@ function showAnswer(answer) {
 		showContent(null, null);
 	});
 	updatePlayers();
+}
+
+function editPlayerScore(player){
+	if(session.players.find(a => a.id == userId).isAdmin){
+		const newScore = prompt("Введите новый счет", player.score);
+		if(newScore)
+			connection.invoke("SetScore", player.id, parseInt(newScore));
+	}
 }
