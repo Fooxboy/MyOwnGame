@@ -454,6 +454,8 @@ public class SessionService
                 player.RemoveScore(selectedQuestion.Price);
             }
             
+            session.ResetRespondingPlayer();
+            
             session.ChangeStateToAnswer();
 
             await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
@@ -630,25 +632,42 @@ public class SessionService
         
         session.RemoveTheme(position);
 
-        var indexPlayer = session.Players.IndexOf(player);
+        var onlinePlayers = session.Players.Where(p => !p.IsAdmin && !p.IsDisconnected).ToList();
+
+        var indexPlayer = onlinePlayers.IndexOf(player);
         
         if (indexPlayer == -1)
         {
             throw new Exception("ВСЕ СЛОМАЛОСЬ, Я ОБОСРАЛСЯ С ИНДЕКСОМ НУЖНА ПОПРАВИТЬ!!!!");
         }
-
+        
         indexPlayer++;
 
-        var newPlayer = session.Players[indexPlayer];
-
-        if (newPlayer.IsAdmin)
+        if (onlinePlayers.Count == indexPlayer)
         {
-            indexPlayer++;
-            newPlayer = session.Players[indexPlayer];
+            indexPlayer = 0;
         }
 
+        var nextPlayer = session.Players[indexPlayer];
+
+        session.SetSelectQuestionPlayer(nextPlayer);
+      
         await _callbackService.FinalThemeRemoved(player.SessionId, session.CurrentRound.Themes);
-        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, newPlayer);
+        await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, nextPlayer);
+        
+        if (session.CurrentRound.Themes.Count == 1)
+        {
+            var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
+
+            var question =
+                currentRound.Themes.Theme.FirstOrDefault(x => session.CurrentRound.Themes.FirstOrDefault().Name == x.Name).Questions.Question.FirstOrDefault();
+
+            var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
+
+            var questionInfo = _questionParser.Parse(question);
+            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, new QuestionPackInfo(), 0, 0, 0);
+            await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
+        }
     }
 
     public async Task SendFinalAnswer(string message, int price, string connectionId)
