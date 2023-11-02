@@ -4,45 +4,99 @@
 }
 
 .side-panel {
-	width: 250px;
-	border-right: var(--border);
-	border-left: var(--border);
-	background: var(--background);
+	width: 300px;
+	display: flex;
+	align-items: stretch;
+	flex-direction: column;
+	justify-content: flex-end;
+	margin: 20px;
+	justify-content: space-between;
 
-	#admin-panel {
+	& > .side-content {
+		border-right: var(--border);
+		border-left: var(--border);
+		background: var(--background);
+		padding: 15px;
+
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 10px;
+		gap: 15px;
 
-		.admin-label {
-			width: 100%;
-			margin-bottom: 25px;
-			border-bottom: var(--border);
+		border-radius: 10px;
+	}
 
-			font-size: 30px;
-			font-family: FtAnimaRegular;
-			line-height: 50px;
+	&.right > .invite.side-content {
+		.invite-text {
+			font-size: 15pt;
+			font-weight: 600;
 			text-align: center;
-		}
-
-		.admin-image {
-			background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
-			background-size: cover;
-			border-radius: 999px;
-
-			width: 180px;
-			aspect-ratio: 1/1;
-		}
-
-		.admin-name {
-			text-align: center;
-			font-size: 17pt;
 		}
 	}
 
-	#tools {
-		padding: 10px;
+
+	&.left {
+		#admin-panel {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 10px;
+
+			.admin-label {
+				width: 100%;
+				margin-bottom: 25px;
+				border-bottom: var(--border);
+
+				font-size: 30px;
+				font-family: FtAnimaRegular;
+				line-height: 50px;
+				text-align: center;
+			}
+
+			.admin-image {
+				background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
+				background-size: cover;
+				border-radius: 999px;
+
+				width: 180px;
+				aspect-ratio: 1/1;
+			}
+
+			.admin-name {
+				text-align: center;
+				font-size: 17pt;
+			}
+		}
+
+		#tools {
+			padding: 10px;
+		}
+	}
+
+	&.right {
+		
+
+		.answer-button {
+			width: 100%;
+			height: 100px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			color: white;
+			background: grey;
+			border-radius: 10px;
+
+			font-family: FtAnimaRegular;
+			font-size: 18pt;
+
+			transition: background ease 0.4s, box-shadow ease 0.4s;
+
+			.can-answer & {
+				background: #de4d43;
+				box-shadow: 0 0 10px 5px #de4d4388;
+				cursor: pointer;
+			}
+		}
 	}
 }
 
@@ -175,7 +229,7 @@
 		&:first-child {
 			height: 100px;
 			.theme-name{
-				border-radius: 20px 0 0 0;
+				border-top-left-radius: 20px;
 			}
 			.price {
 				margin-top: 0;
@@ -185,7 +239,7 @@
 		&:last-child {
 			height: 100px;
 			.theme-name{
-				border-radius: 0 0 0 20px;
+				border-bottom-left-radius: 20px;
 				&:before {
 					content: none;
 				}
@@ -364,37 +418,6 @@
 					font-size: 12pt;
 				}
 			}
-		}
-	}
-}
-
-
-.right.side-panel {
-	display: flex;
-	align-items: flex-end;
-	justify-content: center;
-	padding: 15px;
-
-	.answer-button {
-		width: 100%;
-		height: 100px;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-
-		color: white;
-		background: grey;
-		border-radius: 10px;
-
-		font-family: FtAnimaRegular;
-		font-size: 18pt;
-
-		transition: background ease 0.4s, box-shadow ease 0.4s;
-
-		.can-answer & {
-			background: #de4d43;
-			box-shadow: 0 0 10px 5px #de4d4388;
-			cursor: pointer;
 		}
 	}
 }

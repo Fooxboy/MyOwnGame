@@ -32,7 +32,9 @@ if(isAdmin){
 	`;
 }
 
-document.querySelector("#invite-field").value = `${window.location.href}?invite=${session.id}`;
+document.querySelector("#invite-button").addEventListener("click", () => {
+	navigator.clipboard.writeText(`${window.location.href}${window.location.href.endsWith("?") ? "" : "?"}invite=${session.id}`);
+});
 
 
 /*
@@ -195,8 +197,10 @@ function updateScore(player, score){
 
 function finalThemeRemoved(themes){
 	setRound({
+		isFinal: true,
 		themes: themes
 	});
+	updatePlayers();
 }
 
 /*
@@ -282,7 +286,6 @@ function requestAnswer(){
 }
 
 function requestRemoveTheme(themeId){
-	console.log(`Removing theme: ${themeId}`);
 	connection.invoke("RemoveFinalTheme", parseInt(themeId));
 }
 

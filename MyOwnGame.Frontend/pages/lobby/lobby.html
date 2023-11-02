@@ -1,11 +1,11 @@
 <div id="content">
-	<div class="side-panel">
+	<div class="left side-panel">
 		<div id="admin-panel">
 			<!-- dynamic -->
 		</div>
 		<div id="tools">
 			<div class="button" onclick="disconnect()">Отключиться</div>
-			<input type="text" id="invite-field" class="textfield">
+			
 			<br>
 		</div>
 	</div>
@@ -33,6 +33,12 @@
 		</div>
 	</div>
 	<div class="right side-panel">
-		<div class="answer-button" onclick="requestAnswer()">Ответить</div>
+		<div class="side-content invite">
+			<div class="invite-text">Пригласить игроков</div>
+			<div class="button" id="invite-button">Скопировать ссылку</div>
+		</div>
+		<div class="side-content">
+			<div class="answer-button" onclick="requestAnswer()">Ответить</div>
+		</div>
 	</div>
 <div>
