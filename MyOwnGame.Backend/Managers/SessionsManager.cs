@@ -23,9 +23,13 @@ public class SessionsManager
         
         _sessions.Add(number, session);
         
-        
         _logger.LogInformation($"Добавлена новая сессия с номером '{number}'");
         return session;
+    }
+
+    public Dictionary<long, Session> GetSessions()
+    {
+        return _sessions;
     }
 
     public Session? GetSessionById(long id)

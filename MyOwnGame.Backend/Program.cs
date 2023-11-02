@@ -1,3 +1,4 @@
+using MyOwnGame.Backend.BackgroundTasks;
 using MyOwnGame.Backend.Helpers;
 using MyOwnGame.Backend.Hubs;
 using MyOwnGame.Backend.Managers;
@@ -68,6 +69,10 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<FilesService>();           
             builder.Services.AddTransient<SessionCallbackService>();
 
+            //Регистрация фоновых задач
+            builder.Services.AddSingleton<IBackgroundTask, SessionCleaner>();
+            builder.Services.AddSingleton<BackgroundTaskRunner>();
+
             
             builder.Services.AddCors(options =>
             {
@@ -99,6 +104,10 @@ namespace MyOwnGame.Backend
             app.MapHub<SessionHub>("hubs/session");
 
             app.UseCors("any");
+
+            var backgroundTaskRunner = app.Services.GetRequiredService<BackgroundTaskRunner>();
+
+            backgroundTaskRunner.Run();
 
             app.Run();
         }
