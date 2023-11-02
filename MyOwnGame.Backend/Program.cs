@@ -17,6 +17,14 @@ namespace MyOwnGame.Backend
         {
             var builder = WebApplication.CreateBuilder(args);
 
+#if DEBUG
+            builder.WebHost.UseKestrel(serverOptions =>
+            {
+                serverOptions.ListenAnyIP(3000);
+            });
+#endif
+            
+#if RELEASE
             builder.WebHost.UseKestrel(serverOptions =>
             {
                 serverOptions.ListenAnyIP(3000, options =>
@@ -24,6 +32,7 @@ namespace MyOwnGame.Backend
                     options.UseHttps("fooxboy.ru.pfx", "fooxboy");
                 });
             });
+#endif
             // Add services to the container.
 
             builder.Services.AddControllers();

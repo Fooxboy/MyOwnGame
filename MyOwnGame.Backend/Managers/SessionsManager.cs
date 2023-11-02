@@ -88,7 +88,7 @@ public class SessionsManager
         return session;
     }
 
-    public void DisconnectFromSession(string playerConnectionId)
+    public Session DisconnectFromSession(string playerConnectionId)
     {
         var session = GetSessionByConnection(playerConnectionId);
 
@@ -101,6 +101,8 @@ public class SessionsManager
         _usersConnections.Remove(playerConnectionId);
         
         session.RemovePlayer(playerConnectionId);
+
+        return session;
     }
 
     public Player? GetPlayer(long sessionId, long userId)
@@ -113,6 +115,21 @@ public class SessionsManager
         }
 
         return session.Players.FirstOrDefault(p => p.Id == userId);
+    }
+
+    /// <summary>
+    /// Удалить сессию
+    /// </summary>
+    public void CloseSession(long sessionId)
+    {
+        _sessions.Remove(sessionId);
+
+        var removedConnections = _usersConnections.Where(x => x.Value == sessionId).ToList();
+
+        foreach (var removedConnection in removedConnections)
+        {
+            _usersConnections.Remove(removedConnection.Key);
+        }
     }
 
     public Player? GetAdmin(long sessionId)

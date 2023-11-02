@@ -56,7 +56,7 @@ public class SessionService
         _logger.LogInformation("Парсинг content.xml");
         
         var package = _siqPackageParser.ParsePackage(pathToContent);
-
+        
         if (package is null)
         {
             _logger.LogError("После парсинга content.xml, package оказался null");
@@ -64,6 +64,25 @@ public class SessionService
             Directory.Delete(pathToUpackaged);
             
             throw new ArgumentNullException("Package был null");
+        }
+
+        //Проверяем что нам не засунули в пакет лишнего
+        var allMediaQuestions = package.Rounds.Round.SelectMany(r =>
+            r.Themes.Theme.SelectMany(t => t.Questions.Question.SelectMany(q => q.Scenario.Atom.Where(a=> a.Type is "video" or "image" or "voice").Select(a => a.Text)))).Select(x=> x.Replace("@", string.Empty)).ToList();
+
+        var files = Directory.GetFiles(pathToUpackaged).Select(f=> Path.GetFileName(f));
+
+        foreach (var file in files)
+        {
+            if (file == "content.xml")
+            {
+                continue;
+            }
+            
+            if (!allMediaQuestions.Exists(media=> media == file))
+            {
+                File.Delete(Path.Combine(pathToUpackaged, file));
+            }
         }
 
         var session = _sessionsManager.CreateSession(package, number);
@@ -105,7 +124,7 @@ public class SessionService
             throw new Exception($"Не найден игрок с connection id {connectionId}");
         }
         
-        _sessionsManager.DisconnectFromSession(connectionId);
+        var session = _sessionsManager.DisconnectFromSession(connectionId);
 
         await _callbackService.PlayerDisconnectedFromSession(removingPlayer.SessionId, removingPlayer);
 
@@ -117,6 +136,11 @@ public class SessionService
         {
             _logger.LogInformation("Меняем админа");
             await _callbackService.AdminChanged(removingPlayer.SessionId, newAdmin);
+        }
+
+        if (session.Players.Count(p => !p.IsDisconnected) == 0)
+        {
+            _sessionsManager.CloseSession(removingPlayer.SessionId);
         }
 
         return removingPlayer;
@@ -142,6 +166,13 @@ public class SessionService
         if (questionPlayer is not null)
         {
             await _callbackService.ChangeSelectQuestionPlayer(disconnectedPlayer.SessionId, questionPlayer);
+        }
+
+        var session = _sessionsManager.GetSessionById(disconnectedPlayer.SessionId);
+        
+        if (session.Players.Count(p => !p.IsDisconnected) == 0)
+        {
+            _sessionsManager.CloseSession(disconnectedPlayer.SessionId);
         }
         
         return disconnectedPlayer;
