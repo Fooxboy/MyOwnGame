@@ -177,4 +177,10 @@ public class SessionCallbackService
         await _hubContext.Clients.Client(connectionId).SendAsync(SessionEvents.NeedForwardQuestion.ToString());
         await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.PlayerChoosesQuestionPlayer.ToString());
     }
+
+    public async Task QuestionForwarded(long sessionId, Player forwardedPlayer)
+    {
+        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.QuestionForwarded.ToString(), PlayerDto.Create(forwardedPlayer));
+
+    }
 }

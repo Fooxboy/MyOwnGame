@@ -123,5 +123,10 @@ public enum SessionEvents
     /// <summary>
     /// Пользователь выбирает кому передать вопрос
     /// </summary>
-    PlayerChoosesQuestionPlayer
+    PlayerChoosesQuestionPlayer,
+    
+    /// <summary>
+    /// Вопрос перенаправлен ебать
+    /// </summary>
+    QuestionForwarded
 }

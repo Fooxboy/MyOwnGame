@@ -5,6 +5,7 @@ using MyOwnGame.Backend.Models;
 using MyOwnGame.Backend.Models.Answers;
 using MyOwnGame.Backend.Models.Questions;
 using MyOwnGame.Backend.Models.QuestionsAdditionalInfo;
+using MyOwnGame.Backend.Models.SiqPackage;
 using MyOwnGame.Backend.Parsers;
 
 namespace MyOwnGame.Backend.Services;
@@ -360,6 +361,8 @@ public class SessionService
         {
             throw new Exception("Не найден текущий пользователь што");
         }
+        
+        session.ResetAuctionPrice();
 
         session.SelectCurrentQuestion(questionInfo);
 
@@ -426,7 +429,7 @@ public class SessionService
             throw new Exception("Не найден игрок лол");
         }
 
-        if (session.State != SessionState.Question || session.ReadyToAnswerTime > DateTime.UtcNow || session.RespondingPlayer is not null)
+        if (session.State != SessionState.Question || session.RespondingPlayer is not null)
         {
             await _callbackService.PlayerTriedAnswer(player.SessionId, player);
             return;
@@ -450,7 +453,8 @@ public class SessionService
         if (!answerData.Session.CurrentRound.IsFinal)
         {
             if (answerData.QuestionInfo.QuestionPackInfo != null &&
-                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
+                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction 
+                || answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Cat)
             {
                 var price = session.AuctionPrices.FirstOrDefault(x => x.Player.Id == player.Id);
                 
@@ -488,7 +492,6 @@ public class SessionService
 
         if (!answerData.Session.CurrentRound.IsFinal)
         {
-
             if (answerData.QuestionInfo.QuestionPackInfo != null &&
                 answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
             {
@@ -502,7 +505,7 @@ public class SessionService
             
             session.ResetRespondingPlayer();
             
-            session.ChangeStateToAnswer();
+            session.ChangeStateToQuestion();
 
             await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
         }
@@ -788,34 +791,78 @@ public class SessionService
         {
             throw new Exception("Не найдена сессия в которой находится игрок");
         }
-        
-        session.AddAuctionPrice(player, price);
 
-        var playersWithoutInstallPrices = session.Players.Where(p => !session.AuctionPrices!.Exists(x => x.Player.Id == p.Id) && !p.IsAdmin);
-
-        var nextPlayer = playersWithoutInstallPrices.FirstOrDefault();
-
-        if (nextPlayer is null)
+        if (session.CurrentQuestion.QuestionPackInfo.Type == QuestionPackType.Auction)
         {
-            var questionPlayer = session.AuctionPrices!.MaxBy(price => price.Price).Player;
-            
-            session.SetSelectQuestionPlayer(questionPlayer);
+            session.AddAuctionPrice(player, price);
 
-            await _callbackService.ChangeSelectQuestionPlayer(questionPlayer.SessionId, questionPlayer);
+            var playersWithoutInstallPrices = session.Players.Where(p => !session.AuctionPrices!.Exists(x => x.Player.Id == p.Id) && !p.IsAdmin);
 
-            var questionInfo = session.CurrentQuestion;
-            
-            session.CurrentRound.Themes[questionInfo.ThemeNumber].Prices[questionInfo.PriceNumber].IsAnswered = true;
-            
-            await _callbackService.QuestionSelected(questionPlayer.SessionId, questionInfo.Questions,
-                questionInfo.QuestionPackInfo, -1, questionInfo.ThemeNumber, questionInfo.PriceNumber);
+            var nextPlayer = playersWithoutInstallPrices.FirstOrDefault();
 
-            return;
+            if (nextPlayer is null)
+            {
+                var questionPlayer = session.AuctionPrices!.MaxBy(price => price.Price).Player;
+            
+                session.SetSelectQuestionPlayer(questionPlayer);
+
+                await _callbackService.ChangeSelectQuestionPlayer(questionPlayer.SessionId, questionPlayer);
+
+                var questionInfo = session.CurrentQuestion;
+            
+                session.CurrentRound.Themes[questionInfo.ThemeNumber].Prices[questionInfo.PriceNumber].IsAnswered = true;
+            
+                await _callbackService.QuestionSelected(questionPlayer.SessionId, questionInfo.Questions,
+                    questionInfo.QuestionPackInfo, -1, questionInfo.ThemeNumber, questionInfo.PriceNumber);
+
+                return;
+            }
+            
+            await _callbackService.NeedSetQuestionPrice(nextPlayer.SessionId, nextPlayer, 0, nextPlayer.Score, 1);
+
+        }else if (session.CurrentQuestion.QuestionPackInfo.Type == QuestionPackType.Cat)
+        {
+            session.AddAuctionPrice(player, price);
+            
+            await _callbackService.QuestionSelected(player.SessionId, session.CurrentQuestion.Questions,
+                session.CurrentQuestion.QuestionPackInfo, -1, session.CurrentQuestion.ThemeNumber, session.CurrentQuestion.PriceNumber);
         }
 
+        
         await _callbackService.QuestionPriceInstalled(player.SessionId, player, price);
+    }
 
-        await _callbackService.NeedSetQuestionPrice(nextPlayer.SessionId, nextPlayer, 0, nextPlayer.Score, 1);
+    private (int Min, int Max, int Step) GetPricesByQuestion(QuestionInfo question, Session session)
+    {
+        var max = 0;
+        var min = 0;
+        var step = 0;
+
+        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        {
+            case QuestionPackPriceType.Fixed:
+                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                step = 0;
+                break;
+            case QuestionPackPriceType.Select:
+                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
+                step = 1;
+                break;
+            case QuestionPackPriceType.MaxOrMin:
+                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
+                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
+                step = 0;
+                break;
+            case QuestionPackPriceType.SelectWithStep:
+                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
+                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
+                break;
+        }
+
+        return (min, max, step);
     }
 
     public async Task ForwardQuestion(string connectionId, int playerId)
@@ -841,10 +888,45 @@ public class SessionService
             throw new Exception("Не найден игрок, которому передают вопрос");
         }
 
-        
         session.ChangeStateToAnswer();
+        
+        session.ChangeRespondingPlayer(forwardPlayer);
 
-        await _callbackService.PlayerAnswer(forwardPlayer.SessionId, player);
+        var question = session.CurrentQuestion;
+
+        var max = 0;
+        var min = 0;
+        var step = 0;
+
+        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        {
+            case QuestionPackPriceType.Fixed:
+                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                step = 0;
+                break;
+            case QuestionPackPriceType.Select:
+                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
+                step = 1;
+                break;
+            case QuestionPackPriceType.MaxOrMin:
+                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
+                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
+                step = 0;
+                break;
+            case QuestionPackPriceType.SelectWithStep:
+                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
+                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
+                break;
+        }
+
+        await _callbackService.NeedSetQuestionPrice(forwardPlayer.SessionId, forwardPlayer, min, max, step);
+
+        await _callbackService.QuestionForwarded(forwardPlayer.SessionId, forwardPlayer);
+        
+        session.ChangeRespondingPlayer(forwardPlayer);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

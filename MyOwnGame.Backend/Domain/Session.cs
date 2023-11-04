@@ -146,6 +146,11 @@ public class Session
 
         return seconds;
     }
+    
+    public void ChangeStateToQuestion()
+    {
+        State = SessionState.Question;
+    }
 
     public void ChangeStateToAnswer()
     {

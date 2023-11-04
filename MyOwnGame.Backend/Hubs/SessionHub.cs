@@ -304,11 +304,11 @@ public class SessionHub : Hub
         }
     }
 
-    public async Task ForwardQuestion()
+    public async Task ForwardQuestion(int playerId)
     {
         try
         {
-            
+            await _sessionService.ForwardQuestion(Context.ConnectionId, playerId);
         }
         catch (Exception ex)
         {
