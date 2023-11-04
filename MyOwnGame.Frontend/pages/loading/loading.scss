@@ -1,5 +1,12 @@
-.loading-container {
+#loading-container {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	#loading-panel {
+		background: white;
+		border: 1px solid grey;
+		padding: 5px;
+		border-radius: 20px;
+	}
 }

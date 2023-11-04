@@ -63,6 +63,11 @@ body > * {
 		box-shadow: 0 0 10px 1px rgba(0, 0, 255, 0.1);
 	}
 
+	& > svg {
+		fill: var(--button-color);
+		color: var(--button-color);
+	}
+
 	&.secondary {
 		background: transparent;
 		border: 1.5px solid var(--button);
@@ -80,4 +85,10 @@ body > * {
 	background: var(--textfield);
 	border: var(--textfield-border);
 	outline: 0;
+}
+
+.horizontal-separator {
+	height: 1px;
+	width: 100%;
+	background: rgba(0, 0, 0, 0.2);
 }

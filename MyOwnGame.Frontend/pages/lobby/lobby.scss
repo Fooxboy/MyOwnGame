@@ -35,13 +35,19 @@
 
 
 	&.left {
+		#pack-name {
+			text-align: center;
+			font-weight: 600;
+			font-size: 15pt;
+		}
+
 		#admin-panel {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			gap: 10px;
 
-			.admin-label {
+			#admin-label {
 				width: 100%;
 				margin-bottom: 25px;
 				border-bottom: var(--border);
@@ -52,16 +58,15 @@
 				text-align: center;
 			}
 
-			.admin-image {
-				background: url("http://fooxboy.ru:3000/avatars/78afb4bd-1ff8-4d81-8975-715cdc5884fe.png");
+			#admin-image {
 				background-size: cover;
 				border-radius: 999px;
 
 				width: 180px;
-				aspect-ratio: 1/1;
+				height: 180px
 			}
 
-			.admin-name {
+			#admin-name {
 				text-align: center;
 				font-size: 17pt;
 			}
@@ -73,9 +78,46 @@
 	}
 
 	&.right {
-		
+		#rounds-text {
+		    display: flex;
+		    justify-content: center;
+		    gap: 10px;
+		    align-items: center;
+		}
 
-		.answer-button {
+		#session-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: 7px;
+		}
+
+		#answer-textfield {
+			height: 32px;
+			resize: none;
+			display: none;
+		}
+
+		#answer-price-panel {
+			display: none;
+			#answer-price {
+				width: 100%;
+			}
+			#answer-price-text {
+				display: flex;
+				gap: 5px;
+
+				* {
+					font-size: 15pt;
+					font-family: FtAnimaRegular;
+				}
+				
+				#answer-price-value {
+					font-weight: 600;
+				}
+			}
+		}
+		
+		#answer-button {
 			width: 100%;
 			height: 100px;
 			display: flex;
@@ -336,6 +378,16 @@
 		&.has-status {
 			.player-status {
 				translate: 0 0%;
+			}
+		}
+
+		&.tried-answer {
+			animation: 0.3s ease-in-out jump;
+
+			@keyframes jump {
+				50% {
+					translate: 0 -15px;
+				}
 			}
 		}
 

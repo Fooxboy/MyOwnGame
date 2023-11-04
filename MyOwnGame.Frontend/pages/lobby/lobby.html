@@ -1,12 +1,22 @@
 <div id="content">
 	<div class="left side-panel">
-		<div id="admin-panel">
-			<!-- dynamic -->
+		<div class="side-content">
+			<div id="pack-name"></div>
+			<div class="horizontal-separator"></div>
+			<div class="button" id="invite-button">
+				<svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/></svg>
+				Пригласить друзей
+			</div>
+
+			<div class="button secondary" onclick="disconnect()">Отключиться</div>
 		</div>
-		<div id="tools">
-			<div class="button" onclick="disconnect()">Отключиться</div>
+		<div class="side-content">
+			<div id="admin-panel">
+				<div id="admin-label">Ведущий</div>
+				<div id="admin-image"></div>
+				<div id="admin-name"></div>
+			</div>
 			
-			<br>
 		</div>
 	</div>
 	<div id="center-panel">
@@ -34,11 +44,24 @@
 	</div>
 	<div class="right side-panel">
 		<div class="side-content invite">
-			<div class="invite-text">Пригласить игроков</div>
-			<div class="button" id="invite-button">Скопировать ссылку</div>
+			<div id="rounds-text">Переключить раунд</div>
+			<div id="tools">
+
+			</div>
 		</div>
 		<div class="side-content">
-			<div class="answer-button" onclick="requestAnswer()">Ответить</div>
+			<div id="session-buttons">
+				
+			</div>
+			<textarea id="answer-textfield" class="textfield" rows="2"></textarea>
+			<div id="answer-price-panel">
+				<input type="range" id="answer-price" onchange="setPrice(this.value)">
+				<div id="answer-price-text">
+					<div id="answer-price-label">Ставка:</div>
+					<div id="answer-price-value">30</div>
+				</div>
+			</div>
+			<div id="answer-button" onclick="requestAnswer()">Ответить</div>
 		</div>
 	</div>
 <div>
