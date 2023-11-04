@@ -47,4 +47,19 @@ public class FilesController : Controller
         
         return File(System.IO.File.OpenRead(filePath), contentType);
     }
+
+    [HttpGet("/content/background.jpg")]
+    public async Task<IActionResult> GetBackground()
+    {
+        var path = _filesService.GetBackground();
+        
+        if (path is null)
+        {
+            NotFound(path);
+        }
+        
+        Response.Headers[HeaderNames.CacheControl] = "public,max-age=" + (60 * 60 * 24);
+        
+        return File(System.IO.File.OpenRead(path), "image/jpeg");
+    }
 }

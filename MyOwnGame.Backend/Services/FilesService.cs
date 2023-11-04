@@ -49,4 +49,11 @@ public class FilesService
 
         return sessionResourcesPath;
     }
+
+    public string GetBackground()
+    {
+        var path = _configuration.GetValue<string>("backgroundPath");
+
+        return path;
+    }
 }
