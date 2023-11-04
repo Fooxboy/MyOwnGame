@@ -429,7 +429,7 @@ public class SessionService
             throw new Exception("Не найден игрок лол");
         }
 
-        if (session.State != SessionState.Question || session.RespondingPlayer is not null)
+        if (session.State != SessionState.Question || session.ReadyToAnswerTime > DateTime.UtcNow || session.RespondingPlayer is not null)
         {
             await _callbackService.PlayerTriedAnswer(player.SessionId, player);
             return;
@@ -716,6 +716,7 @@ public class SessionService
             var questionInfo = _questionParser.Parse(question);
             await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, new QuestionPackInfo(), 0, 0, 0);
             await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
+            await _callbackService.PlayerCanAnswer(admin.SessionId);
         }
     }
 
