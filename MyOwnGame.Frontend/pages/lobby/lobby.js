@@ -8,6 +8,8 @@ var canChooseAnswer;
 ======================
 */
 
+document.querySelector("#pack-name").textContent = '"' + session.gameInfo.packageName + '"';
+
 session.players.forEach(player => {
 	addPlayer(player);
 });
@@ -25,15 +27,19 @@ if(isAdmin){
 			<div class="button" onclick="requestRound(${i})">${round.name}</div>
 		`;
 	});
-	document.querySelector("#tools").innerHTML += `
+	document.querySelector("#session-buttons").innerHTML += `
 		<div class="button" onclick="connection.invoke('AcceptAnswer')">Верно</div>
 		<div class="button" onclick="connection.invoke('RejectAnswer')">Не верно</div>
-		<div class="button" onclick="connection.invoke('SkipQuestion')">Скип</div>
+		<div class="button secondary" onclick="connection.invoke('SkipQuestion')">Скип</div>
 	`;
 }
 
+document.querySelector("#session-buttons").style.display = isAdmin ? null : "none";
+document.querySelector("#answer-button").style.display = isAdmin ? "none" : null;
+
 document.querySelector("#invite-button").addEventListener("click", () => {
 	navigator.clipboard.writeText(`${window.location.href}${window.location.href.endsWith("?") ? "" : "?"}invite=${session.id}`);
+	alert("Ссылка скопирована");
 });
 
 
@@ -48,18 +54,6 @@ function addPlayer(player){
 
 	if(player.isAdmin){
 		isAdmin = player.id == userId;
-		const adminPanel = document.querySelector("#admin-panel");
-		if(!adminPanel) {
-			adminPanel = document.createElement("div");
-			adminPanel.classList = "admin-panel";
-			document.querySelector("#left-panel").appendChild(adminPanel);
-		}
-
-		adminPanel.innerHTML = `
-			<div class="admin-label">Ведущий</div>
-			<div class="admin-image" style="background-image: url('${imageUrl}')"></div>
-			<div class="admin-name">${player.name}</div>
-		`;
 	} else {
 		let profilePane = document.querySelector(`#player-${player.id}`);
 		if(!profilePane) {
@@ -151,10 +145,12 @@ function showQuestion(question, type, time, position){
 	console.log(question);
 	console.log("With type:");
 	console.log(type);
+	console.log("With time:");
+	console.log(time);
 	console.log("At position:");
 	console.log(position);
 
-	const answerButton = document.querySelector(".answer-button");
+	const answerButton = document.querySelector("#answer-button");
 	const priceElement = document.querySelector(`#theme-${position.themeNumber} #price-${position.questionNumber}`);
 	priceElement.classList.add("selected");
 
@@ -164,15 +160,29 @@ function showQuestion(question, type, time, position){
 		processQuestionPart(question, 0);
 	}, 1000);
 
-	const seconds = 5;
-	for(let i = seconds; i >= 1; i--)
-		setTimeout(() => answerButton.innerHTML = i, 1000 * (seconds - i));
+	for(let i = time; i >= 1; i--)
+		setTimeout(() => answerButton.innerHTML = i, 1000 * (time - i));
 	updatePlayers();
 }
 
 function canAnswer(can){
 	document.body.classList.toggle("can-answer", can);
-	document.querySelector(".answer-button").innerHTML = "Ответить";
+	document.querySelector("#answer-button").innerHTML = "Ответить";
+
+	const player = getCachedPlayerById(userId);
+	console.log(player);
+
+	const answerText = document.querySelector("#answer-textfield");
+	const answerPricePanel = document.querySelector("#answer-price-panel");
+	const isFinalAndCanAnswer = !isAdmin && session.currentRound.isFinal;
+
+	answerText.style.display = isFinalAndCanAnswer ? "block" : "none";
+	answerPricePanel.style.display = isFinalAndCanAnswer ? "block" : "none";
+	
+	if(isFinalAndCanAnswer){
+		answerText.innerHTML = "";
+		setPrice(0, 0, player.score, 1);
+	}
 }
 
 function showAdminAnswer(answer){
@@ -203,6 +213,14 @@ function finalThemeRemoved(themes){
 	updatePlayers();
 }
 
+function triedToAnswer(player){
+	const playerElement = document.querySelector(`#player-${player.id}`);
+	playerElement.classList.add("tried-answer");
+	setTimeout(() => {
+		playerElement.classList.remove("tried-answer");
+	}, 300);
+}
+
 /*
 ======================
 	  Functions
@@ -223,36 +241,48 @@ function getCachedPlayer(player){
 	return session.players.filter(p2 => p2.id == player.id);
 }
 
+function getCachedPlayerById(id){
+	return session.players.filter(p2 => p2.id == id)[0];
+}
+
 function updatePlayers() {
 	requestUpdateSession().then(() => {
 		session.players.forEach(player => {
-			let profilePane = document.querySelector(`#player-${player.id}`);
 			const imageUrl = `${address}/avatars/${player.avatarImage}`;
-			if(profilePane){
-				profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
-				profilePane.querySelector(".player-name").innerHTML = player.name;
-				const scoreElement = profilePane.querySelector(".player-score");
-				if(scoreElement.textContent != player.score){
-					scoreElement.classList.add("changed");
-					setTimeout(() => scoreElement.classList.remove("changed"), 1000);
-				}
-				scoreElement.innerHTML = player.score;
-			}
 
-			if(session.respondingPlayer && 
-				player.id == session.respondingPlayer.id)
-				setPlayerStatus(player.id, "отвечает", "rgba(240, 240, 100, 1)", "rgba(120, 120, 0, 1)");
-			
-			else if(player.isDisconnected)
-				setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
-			
-			else if(session.selectQuestionPlayer && 
-				session.state == 4 &&
-				player.id == session.selectQuestionPlayer.id) {
-				setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
-				canChooseAnswer = player.id == userId;
-				document.body.classList.toggle("can-choose-price", canChooseAnswer);
-			} else setPlayerStatus(player.id, null, null, null);
+			if(player.isAdmin){
+				const adminPanel = document.querySelector("#admin-panel");
+				adminPanel.querySelector("#admin-image").style.backgroundImage = `url('${imageUrl}')`;
+				adminPanel.querySelector("#admin-name").textContent = player.name;
+			}else {
+				let profilePane = document.querySelector(`#player-${player.id}`);
+				
+				if(profilePane){
+					profilePane.querySelector(".player-image").style.backgroundImage = `url('${imageUrl}')`;
+					profilePane.querySelector(".player-name").innerHTML = player.name;
+					const scoreElement = profilePane.querySelector(".player-score");
+					if(scoreElement.textContent != player.score){
+						scoreElement.classList.add("changed");
+						setTimeout(() => scoreElement.classList.remove("changed"), 1000);
+					}
+					scoreElement.innerHTML = player.score;
+				}
+
+				if(session.respondingPlayer && 
+					player.id == session.respondingPlayer.id)
+					setPlayerStatus(player.id, "отвечает", "rgba(240, 240, 100, 1)", "rgba(120, 120, 0, 1)");
+				
+				else if(player.isDisconnected)
+					setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
+				
+				else if(session.selectQuestionPlayer && 
+					session.state == 4 &&
+					player.id == session.selectQuestionPlayer.id) {
+					setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
+					canChooseAnswer = player.id == userId;
+					document.body.classList.toggle("can-choose-price", canChooseAnswer);
+				} else setPlayerStatus(player.id, null, null, null);
+			}
 		});
 	});
 }
@@ -364,4 +394,14 @@ function editPlayerScore(player){
 		if(newScore)
 			connection.invoke("SetScore", player.id, parseInt(newScore));
 	}
+}
+
+function setPrice(price, min = null, max = null, step = 1){
+	document.querySelector("#answer-price-value").textContent = price;
+
+	const range = document.querySelector("#answer-price");
+	range.value = price;
+	if(min) range.min = min;
+	if(max) range.max = max;
+	range.step = step;
 }

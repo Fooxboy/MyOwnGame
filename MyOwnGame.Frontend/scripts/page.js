@@ -126,6 +126,7 @@ async function connectToSession(sessionId){
 		connection.on("SkipQuestion", answer => skipQuestion(answer));
 		connection.on("ScoreChanged", (player, score) => updateScore(player, score));
 		connection.on("FinalThemeRemoved", (themes) => finalThemeRemoved(themes));
+		connection.on("PlayerTriedAnswer", (player) => triedToAnswer(player));
 
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);
