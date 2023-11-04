@@ -165,10 +165,16 @@ public class SessionCallbackService
         
         await _hubContext.Clients.Group(player.SessionId.ToString()).SendAsync(SessionEvents.PlayerInstallingQuestionPrice.ToString(), PlayerDto.Create(player));
     }
-
+    
     public async Task QuestionPriceInstalled(long sessionId, Player player, int? score)
     {
         await _hubContext.Clients.Group(sessionId.ToString())
             .SendAsync(SessionEvents.QuestionPriceInstalled.ToString(), PlayerDto.Create(player), score);
+    }
+
+    public async Task NeedForwardQuestion(string connectionId, long sessionId)
+    {
+        await _hubContext.Clients.Client(connectionId).SendAsync(SessionEvents.NeedForwardQuestion.ToString());
+        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.PlayerChoosesQuestionPlayer.ToString());
     }
 }

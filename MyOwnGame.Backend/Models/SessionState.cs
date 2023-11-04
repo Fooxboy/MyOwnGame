@@ -12,5 +12,7 @@ public enum SessionState
     
     Table,
     
+    ForwardQuestion,
+    
     Pause
 }

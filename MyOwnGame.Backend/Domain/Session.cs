@@ -161,6 +161,11 @@ public class Session
         ResetRespondingPlayer();
     }
 
+    public void ChangeStateToForwardQuestion()
+    {
+        State = SessionState.ForwardQuestion;
+    }
+
     public void AddReadyToAnswerPlayer(Player player, DateTime time)
     {
         _playersReadyToAnswer.Add((player, time));

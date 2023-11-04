@@ -304,6 +304,19 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task ForwardQuestion()
+    {
+        try
+        {
+            
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         try

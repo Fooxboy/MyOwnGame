@@ -378,6 +378,21 @@ public class SessionService
 
                 return;
             }
+
+            //Если это кот в мешке, кидаем инфу что надо передать 
+            if (questionInfo.QuestionPackInfo.Type == QuestionPackType.Cat || questionInfo.QuestionPackInfo.Type == QuestionPackType.SuperCat)
+            {
+                await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
+
+                await _callbackService.QuestionSelected(currentPlayer.SessionId, new List<QuestionBase>(),
+                    questionInfo.QuestionPackInfo, -1, themeNumber, priceNumber);
+
+                await _callbackService.NeedForwardQuestion(currentPlayer.ConnectionId, currentPlayer.SessionId);
+                
+                session.ChangeStateToForwardQuestion();
+
+                return;
+            }
         }
         
         //simple
@@ -679,7 +694,7 @@ public class SessionService
             indexPlayer = 0;
         }
 
-        var nextPlayer = session.Players[indexPlayer];
+        var nextPlayer = onlinePlayers[indexPlayer];
 
         session.SetSelectQuestionPlayer(nextPlayer);
       
@@ -801,6 +816,35 @@ public class SessionService
         await _callbackService.QuestionPriceInstalled(player.SessionId, player, price);
 
         await _callbackService.NeedSetQuestionPrice(nextPlayer.SessionId, nextPlayer, 0, nextPlayer.Score, 1);
+    }
+
+    public async Task ForwardQuestion(string connectionId, int playerId)
+    {
+        var player = GetPlayer(connectionId);
+
+        if (player is null)
+        {
+            throw new Exception("Бляяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяя");
+        }
+
+        var session = _sessionsManager.GetSessionById(player.SessionId);
+
+        if (session is null)
+        {
+            throw new Exception("Сессия не найдена((((");
+        }
+
+        var forwardPlayer = GetPlayer(player.SessionId, playerId);
+
+        if (forwardPlayer is null)
+        {
+            throw new Exception("Не найден игрок, которому передают вопрос");
+        }
+
+        
+        session.ChangeStateToAnswer();
+
+        await _callbackService.PlayerAnswer(forwardPlayer.SessionId, player);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

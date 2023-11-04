@@ -114,4 +114,14 @@ public enum SessionEvents
     /// Пользователь устанавливает цену вопроса
     /// </summary>
     PlayerInstallingQuestionPrice,
+    
+    /// <summary>
+    /// Нужно передать вопрос
+    /// </summary>
+    NeedForwardQuestion,
+    
+    /// <summary>
+    /// Пользователь выбирает кому передать вопрос
+    /// </summary>
+    PlayerChoosesQuestionPlayer
 }

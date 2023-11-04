@@ -71,6 +71,7 @@ namespace MyOwnGame.Backend
 
             //Регистрация фоновых задач
             builder.Services.AddSingleton<IBackgroundTask, SessionCleaner>();
+            builder.Services.AddSingleton<IBackgroundTask, PackageCleaner>();
             builder.Services.AddSingleton<BackgroundTaskRunner>();
 
             
