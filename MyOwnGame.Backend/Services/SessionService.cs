@@ -69,7 +69,12 @@ public class SessionService
 
         //Проверяем что нам не засунули в пакет лишнего
         var allMediaQuestions = package.Rounds.Round.SelectMany(r =>
-            r.Themes.Theme.SelectMany(t => t.Questions.Question.SelectMany(q => q.Scenario.Atom.Where(a=> a.Type is "video" or "image" or "voice").Select(a => a.Text)))).Select(x=> x.Replace("@", string.Empty)).ToList();
+            r.Themes.Theme.SelectMany(t => t.Questions!.Question
+                .SelectMany(q => q.Scenario.Atom
+                    .Where(a=> a.Type is "video" or "image" or "voice")
+                    .Select(a => a.Text))))
+            .Select(x=> x.Replace("@", string.Empty))
+            .ToList();
 
         var files = Directory.GetFiles(pathToUpackaged).Select(f=> Path.GetFileName(f));
 
