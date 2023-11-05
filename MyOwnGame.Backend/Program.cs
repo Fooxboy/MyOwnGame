@@ -68,6 +68,7 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<SessionService>();
             builder.Services.AddTransient<FilesService>();           
             builder.Services.AddTransient<SessionCallbackService>();
+            builder.Services.AddTransient<AdminService>();
 
             //Регистрация хендлеров для обработки разных типов вопросов
             builder.Services.AddTransient<IQuestionHandler, AuctionQuestionHandler>();
