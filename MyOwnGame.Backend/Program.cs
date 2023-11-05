@@ -1,4 +1,5 @@
 using MyOwnGame.Backend.BackgroundTasks;
+using MyOwnGame.Backend.Handlers;
 using MyOwnGame.Backend.Helpers;
 using MyOwnGame.Backend.Hubs;
 using MyOwnGame.Backend.Managers;
@@ -68,6 +69,13 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<SessionService>();
             builder.Services.AddTransient<FilesService>();           
             builder.Services.AddTransient<SessionCallbackService>();
+
+            //Регистрация хендлеров для обработки разных типов вопросов
+            builder.Services.AddTransient<IQuestionHandler, AuctionQuestionHandler>();
+            builder.Services.AddTransient<IQuestionHandler, CatQuestionHandler>();
+            builder.Services.AddTransient<IQuestionHandler, FinalQuestionHandler>();
+            builder.Services.AddTransient<IQuestionHandler, SimpleQuestionHandler>();
+            builder.Services.AddTransient<QuestionHandlerFactory>();
 
             //Регистрация фоновых задач
             builder.Services.AddSingleton<IBackgroundTask, SessionCleaner>();
