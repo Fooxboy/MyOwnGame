@@ -64,4 +64,43 @@ public class CatQuestionHandler : BaseQuestionHandler
 
         await PostHandleSetQuestionPrice(session, player, price);
     }
+
+    public override async Task HandleForwardQuestion(Session session, Player forwardPlayer)
+    {
+        var question = session.CurrentQuestion;
+
+        var max = 0;
+        var min = 0;
+        var step = 0;
+
+        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        {
+            case QuestionPackPriceType.Fixed:
+                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
+                step = 0;
+                break;
+            case QuestionPackPriceType.Select:
+                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
+                step = 1;
+                break;
+            case QuestionPackPriceType.MaxOrMin:
+                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
+                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
+                step = 0;
+                break;
+            case QuestionPackPriceType.SelectWithStep:
+                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
+                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
+                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
+                break;
+        }
+
+        await _callbackService.NeedSetQuestionPrice(forwardPlayer.SessionId, forwardPlayer, min, max, step);
+
+        await _callbackService.QuestionForwarded(forwardPlayer.SessionId, forwardPlayer);
+        
+        session.ChangeRespondingPlayer(forwardPlayer);
+    }
 }

@@ -694,39 +694,6 @@ public class SessionService
         await handler.HandleSetQuestionPrice(session, player, price);
     }
 
-    private (int Min, int Max, int Step) GetPricesByQuestion(QuestionInfo question, Session session)
-    {
-        var max = 0;
-        var min = 0;
-        var step = 0;
-
-        switch (question.QuestionPackInfo.CatInfo.PriceType)
-        {
-            case QuestionPackPriceType.Fixed:
-                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                step = 0;
-                break;
-            case QuestionPackPriceType.Select:
-                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
-                step = 1;
-                break;
-            case QuestionPackPriceType.MaxOrMin:
-                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
-                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
-                step = 0;
-                break;
-            case QuestionPackPriceType.SelectWithStep:
-                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
-                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
-                break;
-        }
-
-        return (min, max, step);
-    }
-
     public async Task ForwardQuestion(string connectionId, int playerId)
     {
         var player = _sessionsManager.GetPlayer(connectionId);
@@ -754,41 +721,14 @@ public class SessionService
         
         session.ChangeRespondingPlayer(forwardPlayer);
 
-        var question = session.CurrentQuestion;
+        var handler = _questionHandlerFactory.GetHandler(session.CurrentQuestion);
 
-        var max = 0;
-        var min = 0;
-        var step = 0;
-
-        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        if (handler is null)
         {
-            case QuestionPackPriceType.Fixed:
-                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                step = 0;
-                break;
-            case QuestionPackPriceType.Select:
-                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
-                step = 1;
-                break;
-            case QuestionPackPriceType.MaxOrMin:
-                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
-                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
-                step = 0;
-                break;
-            case QuestionPackPriceType.SelectWithStep:
-                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
-                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
-                break;
+            throw new Exception($"Не найден хендлер типа '{session.CurrentQuestion.QuestionPackInfo!.Type}'");
         }
 
-        await _callbackService.NeedSetQuestionPrice(forwardPlayer.SessionId, forwardPlayer, min, max, step);
-
-        await _callbackService.QuestionForwarded(forwardPlayer.SessionId, forwardPlayer);
-        
-        session.ChangeRespondingPlayer(forwardPlayer);
+        await handler.HandleForwardQuestion(session, forwardPlayer);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

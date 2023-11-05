@@ -65,7 +65,6 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<IPackQuestionParser, SimpleQuestionPackParser>();
 
             builder.Services.AddTransient<QuestionParser>();
-            
             builder.Services.AddTransient<SessionService>();
             builder.Services.AddTransient<FilesService>();           
             builder.Services.AddTransient<SessionCallbackService>();
@@ -75,6 +74,7 @@ namespace MyOwnGame.Backend
             builder.Services.AddTransient<IQuestionHandler, CatQuestionHandler>();
             builder.Services.AddTransient<IQuestionHandler, FinalQuestionHandler>();
             builder.Services.AddTransient<IQuestionHandler, SimpleQuestionHandler>();
+            builder.Services.AddTransient<IQuestionHandler, FreeQuestionHandler>();
             builder.Services.AddTransient<QuestionHandlerFactory>();
 
             //Регистрация фоновых задач

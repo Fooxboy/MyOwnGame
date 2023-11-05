@@ -15,4 +15,6 @@ public interface IQuestionHandler
     public Task HandleRejectAnswer(Session session, Player player);
 
     public Task HandleSetQuestionPrice(Session session, Player player, int price);
+
+    public Task HandleForwardQuestion(Session session, Player forwardPlayer);
 }

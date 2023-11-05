@@ -64,6 +64,11 @@ public abstract class BaseQuestionHandler : IQuestionHandler
         return Task.CompletedTask;
     }
 
+    public virtual Task HandleForwardQuestion(Session session, Player forwardPlayer)
+    {
+        return Task.CompletedTask;
+    }
+
     protected async Task PostHandleSetQuestionPrice(Session session, Player player, int price)
     {
         await _callbackService.QuestionPriceInstalled(player.SessionId, player, price);
