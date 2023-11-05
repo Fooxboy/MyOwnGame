@@ -452,9 +452,9 @@ public class SessionService
         //Если это не финал, мы действуем по обычной логике
         if (!answerData.Session.CurrentRound.IsFinal)
         {
-            if (answerData.QuestionInfo.QuestionPackInfo != null &&
-                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction 
-                || answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Cat)
+            if (answerData.QuestionInfo?.QuestionPackInfo != null &&
+                answerData.QuestionInfo?.QuestionPackInfo.Type == QuestionPackType.Auction 
+                || answerData.QuestionInfo?.QuestionPackInfo?.Type == QuestionPackType.Cat)
             {
                 var price = session.AuctionPrices.FirstOrDefault(x => x.Player.Id == player.Id);
                 
