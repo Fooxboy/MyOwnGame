@@ -12,5 +12,7 @@ public enum QuestionPackType
     
     Auction = 4,
     
-    Other = 5
+    Other = 5,
+    
+    Final = 6,
 }

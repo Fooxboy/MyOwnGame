@@ -61,7 +61,7 @@ public class SessionHub : Hub
     {
         try
         {
-            var session = await _sessionService.GetSession(sessionId, Context.ConnectionId);
+            var session =  _sessionService.GetSession(sessionId);
 
             return SessionDto.Create(session);
         }
@@ -94,7 +94,7 @@ public class SessionHub : Hub
         try
         {
             _logger.LogInformation($"Выбор вопроса с темой: {themeNumber}, ценой: {priceNumber}");
-            await _sessionService.GetQuestionInfo(themeNumber, priceNumber, Context.ConnectionId);
+            await _sessionService.SelectQuestion(themeNumber, priceNumber, Context.ConnectionId);
         }
         catch (Exception ex)
         {
@@ -282,7 +282,7 @@ public class SessionHub : Hub
         {
             _logger.LogInformation("Показ финального вопроса всем пользователям");
 
-            await _sessionService.ShowFinalAnswer(playerId, Context.ConnectionId);
+            //await _sessionService.ShowFinalAnswer(playerId, Context.ConnectionId);
         }
         catch (Exception ex)
         {

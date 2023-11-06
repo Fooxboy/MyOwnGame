@@ -136,6 +136,11 @@ public class SessionsManager
         }
     }
 
+    public Dictionary<string, long> GetUsersConnections()
+    {
+        return _usersConnections;
+    }
+
     public Player? GetAdmin(long sessionId)
     {
         var admin = GetSessionById(sessionId).Players.FirstOrDefault(x => x.IsAdmin);

@@ -2,10 +2,7 @@
 using MyOwnGame.Backend.Helpers;
 using MyOwnGame.Backend.Managers;
 using MyOwnGame.Backend.Models;
-using MyOwnGame.Backend.Models.Answers;
-using MyOwnGame.Backend.Models.Questions;
 using MyOwnGame.Backend.Models.QuestionsAdditionalInfo;
-using MyOwnGame.Backend.Models.SiqPackage;
 using MyOwnGame.Backend.Parsers;
 
 namespace MyOwnGame.Backend.Services;
@@ -19,9 +16,11 @@ public class SessionService
     private readonly QuestionParser _questionParser;
     private readonly ILogger<SessionService> _logger;
     private readonly SessionCallbackService _callbackService;
+    private readonly QuestionHandlerFactory _questionHandlerFactory;
 
     public SessionService(IConfiguration configuration, SiqPackageParser siqPackageParser, SessionsManager sessionsManager, 
-        QuestionParser questionParser, UsersService usersService, ILogger<SessionService> logger, SessionCallbackService callbackService)
+        QuestionParser questionParser, UsersService usersService, ILogger<SessionService> logger, 
+        SessionCallbackService callbackService, QuestionHandlerFactory questionHandlerFactory)
     {
         _configuration = configuration;
         _siqPackageParser = siqPackageParser;
@@ -30,6 +29,7 @@ public class SessionService
         _usersService = usersService;
         _logger = logger;
         _callbackService = callbackService;
+        _questionHandlerFactory = questionHandlerFactory;
     }
 
     public Session? CreateSession(string pathToPackage, long number)
@@ -69,7 +69,12 @@ public class SessionService
 
         //Проверяем что нам не засунули в пакет лишнего
         var allMediaQuestions = package.Rounds.Round.SelectMany(r =>
-            r.Themes.Theme.SelectMany(t => t.Questions.Question.SelectMany(q => q.Scenario.Atom.Where(a=> a.Type is "video" or "image" or "voice").Select(a => a.Text)))).Select(x=> x.Replace("@", string.Empty)).ToList();
+            r.Themes.Theme.SelectMany(t => t.Questions!.Question
+                .SelectMany(q => q.Scenario.Atom
+                    .Where(a=> a.Type is "video" or "image" or "voice")
+                    .Select(a => a.Text))))
+            .Select(x=> x.Replace("@", string.Empty))
+            .ToList();
 
         var files = Directory.GetFiles(pathToUpackaged).Select(f=> Path.GetFileName(f));
 
@@ -93,6 +98,11 @@ public class SessionService
         return session;
     }
 
+    public Session? GetSession(long sessionId)
+    {
+        return  _sessionsManager.GetSessionById(sessionId);
+    }
+    
     public async Task<Session> ConnectToSession(long sessionId, long userId, string connectionId)
     {
         var user = await _usersService.GetUser(userId);
@@ -106,7 +116,7 @@ public class SessionService
         
         var session = _sessionsManager.ConnectToSession(sessionId, user, connectionId);
 
-        var player = GetPlayer(sessionId, userId);
+        var player = _sessionsManager.GetPlayer(sessionId, userId);
 
         await _callbackService.PlayerConnectedToSession(sessionId, player);
         await _callbackService.SubscribeUserToEvents(sessionId, player.ConnectionId);
@@ -206,27 +216,10 @@ public class SessionService
         
         return selectQuestionPlayer;
     }
-
-    public Player? GetPlayer(long sessionId, long userId)
-    {
-        return _sessionsManager.GetPlayer(sessionId, userId);
-    }
     
-    public Player? GetPlayer(string connectionId)
-    {
-        return _sessionsManager.GetPlayer(connectionId);
-    }
-
-    public async Task<Session> GetSession(long sessionId, string connectionId)
-    {
-        var session = _sessionsManager.GetSessionById(sessionId);
-
-        return session;
-    } 
-
     public async Task ChangeRound(int roundPosition, string connectionId)
     {
-        var player = GetPlayer(connectionId);
+        var player = _sessionsManager.GetPlayer(connectionId);
 
         if (player is null)
         {
@@ -264,7 +257,7 @@ public class SessionService
 
     public long Pause(string connectionId)
     {
-        var player = GetPlayer(connectionId);
+        var player = _sessionsManager.GetPlayer(connectionId);
 
         if (player is null)
         {
@@ -281,7 +274,7 @@ public class SessionService
 
     public long Resume(string connectionId)
     {
-        var player = GetPlayer(connectionId);
+        var player = _sessionsManager.GetPlayer(connectionId);
 
         if (player is null)
         {
@@ -296,34 +289,16 @@ public class SessionService
         return player.SessionId;
     }
 
-    public Session GetSession(long id)
-    {
-        var session = _sessionsManager.GetSessionById(id);
-
-        if (session is null)
-        {
-            throw new Exception("Не найдена сессия");
-        }
-        
-        return session;
-    }
-
-    public async Task GetQuestionInfo(int themeNumber, int priceNumber, string connectionId)
+    public async Task SelectQuestion(int themeNumber, int priceNumber, string connectionId)
     {
         var session = _sessionsManager.GetSessionByConnection(connectionId);
 
+        //Всякая валидация
         if (session is null)
         {
             _logger.LogError("Не найдена сессия, в которой игрок учавствует");
 
             throw new Exception("Не найдена сессия");
-        }
-
-        if (session.CurrentRound is null)
-        {
-            _logger.LogError("Игра ещё не началась");
-
-            throw new Exception("Игра ещё не началась");
         }
 
         if (session.SelectQuestionPlayer is null)
@@ -336,25 +311,16 @@ public class SessionService
             _logger.LogError("Пользователь не может выбирать вопрос");
             throw new Exception("Пользователь не может выбирать вопрос");
         }
+        
+        var admin = session.Players.FirstOrDefault(p => p.IsAdmin);
 
-        var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
-
-        var question = currentRound.Themes.Theme[themeNumber].Questions.Question[priceNumber];
-
-        var questionInfo = _questionParser.Parse(question);
-
-        questionInfo.ThemeNumber = themeNumber;
-        questionInfo.PriceNumber = priceNumber;
-
-        var adminConnectionId = session.Players.FirstOrDefault(p => p.IsAdmin)?.ConnectionId;
-
-        if (adminConnectionId is null)
+        if (admin is null)
         {
             _logger.LogError("Не найден админ в сесси");
 
             throw new Exception("Не найден connection ID админа");
         }
-
+        
         var currentPlayer = session.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
 
         if (currentPlayer is null)
@@ -362,53 +328,28 @@ public class SessionService
             throw new Exception("Не найден текущий пользователь што");
         }
         
-        session.ResetAuctionPrice();
+        var currentRound = session.Package.Rounds.Round[session.CurrentRound!.Number];
+        var question = currentRound.Themes!.Theme[themeNumber]!.Questions!.Question[priceNumber];
 
-        session.SelectCurrentQuestion(questionInfo);
+        
+        //Размазал парсинг вопроса блять. Это плохо надо это как то засунуть в парсер.
+        var questionInfo = _questionParser.Parse(question);
+        questionInfo.ThemeNumber = themeNumber;
+        questionInfo.PriceNumber = priceNumber;
 
-        if (questionInfo.QuestionPackInfo is not null && questionInfo.QuestionPackInfo.Type != QuestionPackType.Simple)
+        if (session.CurrentRound.IsFinal)
         {
-            //Если это аукцион - возвращаем инфу о том что выбран вопрос, но без вопросов.
-            if (questionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
-            {
-                
-                await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
-
-                await _callbackService.QuestionSelected(currentPlayer.SessionId, new List<QuestionBase>(),
-                    questionInfo.QuestionPackInfo, -1, themeNumber, priceNumber);
-
-                await _callbackService.NeedSetQuestionPrice(currentPlayer.SessionId, currentPlayer, 1, currentPlayer.Score, 1);
-
-                return;
-            }
-
-            //Если это кот в мешке, кидаем инфу что надо передать 
-            if (questionInfo.QuestionPackInfo.Type == QuestionPackType.Cat || questionInfo.QuestionPackInfo.Type == QuestionPackType.SuperCat)
-            {
-                await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
-
-                await _callbackService.QuestionSelected(currentPlayer.SessionId, new List<QuestionBase>(),
-                    questionInfo.QuestionPackInfo, -1, themeNumber, priceNumber);
-
-                await _callbackService.NeedForwardQuestion(currentPlayer.ConnectionId, currentPlayer.SessionId);
-                
-                session.ChangeStateToForwardQuestion();
-
-                return;
-            }
+            questionInfo.QuestionPackInfo = new QuestionPackInfo() { Type = QuestionPackType.Final };
         }
         
-        //simple
-        var seconds = session.ChangeStateToQuestion(questionInfo.Questions.Count);
-        
-        DelayTaskRunner.Run(seconds, () => _callbackService.PlayerCanAnswer(currentPlayer.SessionId));
+        var handler = _questionHandlerFactory.GetHandler(questionInfo);
 
-        session.CurrentRound.Themes[themeNumber].Prices[priceNumber].IsAnswered = true;
-        
-        await _callbackService.QuestionSelected(currentPlayer.SessionId, questionInfo.Questions,
-            questionInfo.QuestionPackInfo, seconds, themeNumber, priceNumber);
+        if (handler is null)
+        {
+            throw new Exception($"Не найден хендлер типа '{questionInfo.QuestionPackInfo.Type}'");
+        }
 
-        await _callbackService.QuestionSelectedAdmin(adminConnectionId, questionInfo.Answer);
+        await handler.HandleSelectQuestion(session, currentPlayer, admin, questionInfo);
     }
     
     public async Task GiveAnswer(DateTime time, string connectionId)
@@ -446,77 +387,34 @@ public class SessionService
     {
         var answerData = ValidateAnswerData(connectionId);
         var player = answerData.Player;
-        var selectedQuestion = answerData.QuestionInfo;
         var session = answerData.Session;
         
-        //Если это не финал, мы действуем по обычной логике
-        if (!answerData.Session.CurrentRound.IsFinal)
-        {
-            if (answerData.QuestionInfo.QuestionPackInfo != null &&
-                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction 
-                || answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Cat)
-            {
-                var price = session.AuctionPrices.FirstOrDefault(x => x.Player.Id == player.Id);
-                
-                player.AddScore(price.Price);
-            }
-            else
-            {
-                player.AddScore(selectedQuestion.Price);
-            }
-            
-            session.ChangeStateToTable();
-            session.SetSelectQuestionPlayer(answerData.Player);
+        var handler = _questionHandlerFactory.GetHandler(answerData.QuestionInfo);
 
-            await _callbackService.AcceptAnswer(player.SessionId, player, player.Score, answerData.QuestionInfo.Answer);
-
-            await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, player);
-        }
-        else
+        if (handler is null)
         {
-            //Если это финал - цену мы берем из финальных ответов и не показываем ответ.
-            
-            var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
-            player.AddScore(price);
-            
-            await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+            throw new Exception($"Не найден хендлер типа '{answerData.QuestionInfo.QuestionPackInfo.Type}'");
         }
+        handler.SetCurrentSessionService(this);
+        
+        await handler.HandleAcceptQuestion(session, player);
     }
 
     public async Task RejectAnswer(string connectionId)
     {
         var answerData = ValidateAnswerData(connectionId);
         var player = answerData.Player;
-        var selectedQuestion = answerData.QuestionInfo;
         var session = answerData.Session;
 
-        if (!answerData.Session.CurrentRound.IsFinal)
-        {
-            if (answerData.QuestionInfo.QuestionPackInfo != null &&
-                answerData.QuestionInfo.QuestionPackInfo.Type == QuestionPackType.Auction)
-            {
-                var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
-                player.RemoveScore(price);
-            }
-            else
-            {
-                player.RemoveScore(selectedQuestion.Price);
-            }
-            
-            session.ResetRespondingPlayer();
-            
-            session.ChangeStateToQuestion();
+        var handler = _questionHandlerFactory.GetHandler(answerData.QuestionInfo);
 
-            await _callbackService.RejectAnswer(player.SessionId, player, player.Score);
-        }
-        else
+        if (handler is null)
         {
-            var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id).Price;
-            
-            player.RemoveScore(price);
-
-            await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+            throw new Exception($"Не найден хендлер типа '{answerData.QuestionInfo.QuestionPackInfo.Type}'");
         }
+        handler.SetCurrentSessionService(this);
+
+        await handler.HandleRejectAnswer(session, player);
     }
 
     public async Task SkipQuestion(string connectionId)
@@ -714,7 +612,11 @@ public class SessionService
             var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
 
             var questionInfo = _questionParser.Parse(question);
-            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, new QuestionPackInfo(), 0, 0, 0);
+            questionInfo.QuestionPackInfo = new QuestionPackInfo() { Type = QuestionPackType.Final };
+            
+            session.SelectCurrentQuestion(questionInfo);
+            
+            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, questionInfo.QuestionPackInfo, 0, 0, 0);
             await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
             await _callbackService.PlayerCanAnswer(admin.SessionId);
         }
@@ -739,23 +641,20 @@ public class SessionService
         session.AddFinalAnswer(player, message, price);
 
         await _callbackService.FinalQuestionResponsed(player.SessionId, player);
+
+        if (session.Players.Count(x=> x is { IsAdmin: false, IsDisconnected: false }) >= session.FinalAnswers.Count)
+        {
+            var firstPlayer = session.FinalAnswers.FirstOrDefault().Player;
+            
+            session.ChangeRespondingPlayer(firstPlayer);
+
+            await ShowFinalAnswer(firstPlayer.Id, firstPlayer.SessionId);
+        }
     }
 
-    public async Task ShowFinalAnswer(int playerId, string connectionId)
+    public async Task ShowFinalAnswer(long playerId, long sessionId)
     {
-        var adminUser = _sessionsManager.GetPlayer(connectionId);
-
-        if (adminUser is null)
-        {
-            throw new Exception("Админ не найден");
-        }
-
-        if (!adminUser.IsAdmin)
-        {
-            throw new Exception("Ты не админ уйди отсюдава");
-        }
-
-        var player = _sessionsManager.GetPlayer(adminUser.SessionId, playerId);
+        var player = _sessionsManager.GetPlayer(sessionId, playerId);
 
         if (player is null)
         {
@@ -764,7 +663,6 @@ public class SessionService
 
         var session = _sessionsManager.GetSessionById(player.SessionId);
         
-
         if (session is null)
         {
             throw new Exception("Не найдена сессия у игрока, вопрос котого надо показать");
@@ -792,83 +690,20 @@ public class SessionService
         {
             throw new Exception("Не найдена сессия в которой находится игрок");
         }
-
-        if (session.CurrentQuestion.QuestionPackInfo.Type == QuestionPackType.Auction)
-        {
-            session.AddAuctionPrice(player, price);
-
-            var playersWithoutInstallPrices = session.Players.Where(p => !session.AuctionPrices!.Exists(x => x.Player.Id == p.Id) && !p.IsAdmin);
-
-            var nextPlayer = playersWithoutInstallPrices.FirstOrDefault();
-
-            if (nextPlayer is null)
-            {
-                var questionPlayer = session.AuctionPrices!.MaxBy(price => price.Price).Player;
-            
-                session.SetSelectQuestionPlayer(questionPlayer);
-
-                await _callbackService.ChangeSelectQuestionPlayer(questionPlayer.SessionId, questionPlayer);
-
-                var questionInfo = session.CurrentQuestion;
-            
-                session.CurrentRound.Themes[questionInfo.ThemeNumber].Prices[questionInfo.PriceNumber].IsAnswered = true;
-            
-                await _callbackService.QuestionSelected(questionPlayer.SessionId, questionInfo.Questions,
-                    questionInfo.QuestionPackInfo, -1, questionInfo.ThemeNumber, questionInfo.PriceNumber);
-
-                return;
-            }
-            
-            await _callbackService.NeedSetQuestionPrice(nextPlayer.SessionId, nextPlayer, 0, nextPlayer.Score, 1);
-
-        }else if (session.CurrentQuestion.QuestionPackInfo.Type == QuestionPackType.Cat)
-        {
-            session.AddAuctionPrice(player, price);
-            
-            await _callbackService.QuestionSelected(player.SessionId, session.CurrentQuestion.Questions,
-                session.CurrentQuestion.QuestionPackInfo, -1, session.CurrentQuestion.ThemeNumber, session.CurrentQuestion.PriceNumber);
-        }
-
         
-        await _callbackService.QuestionPriceInstalled(player.SessionId, player, price);
-    }
+        var handler = _questionHandlerFactory.GetHandler(session.CurrentQuestion);
 
-    private (int Min, int Max, int Step) GetPricesByQuestion(QuestionInfo question, Session session)
-    {
-        var max = 0;
-        var min = 0;
-        var step = 0;
-
-        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        if (handler is null)
         {
-            case QuestionPackPriceType.Fixed:
-                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                step = 0;
-                break;
-            case QuestionPackPriceType.Select:
-                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
-                step = 1;
-                break;
-            case QuestionPackPriceType.MaxOrMin:
-                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
-                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
-                step = 0;
-                break;
-            case QuestionPackPriceType.SelectWithStep:
-                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
-                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
-                break;
+            throw new Exception($"Не найден хендлер типа '{session.CurrentQuestion.QuestionPackInfo!.Type}'");
         }
 
-        return (min, max, step);
+        await handler.HandleSetQuestionPrice(session, player, price);
     }
 
     public async Task ForwardQuestion(string connectionId, int playerId)
     {
-        var player = GetPlayer(connectionId);
+        var player = _sessionsManager.GetPlayer(connectionId);
 
         if (player is null)
         {
@@ -882,7 +717,7 @@ public class SessionService
             throw new Exception("Сессия не найдена((((");
         }
 
-        var forwardPlayer = GetPlayer(player.SessionId, playerId);
+        var forwardPlayer = _sessionsManager.GetPlayer(player.SessionId, playerId);
 
         if (forwardPlayer is null)
         {
@@ -893,41 +728,14 @@ public class SessionService
         
         session.ChangeRespondingPlayer(forwardPlayer);
 
-        var question = session.CurrentQuestion;
+        var handler = _questionHandlerFactory.GetHandler(session.CurrentQuestion);
 
-        var max = 0;
-        var min = 0;
-        var step = 0;
-
-        switch (question.QuestionPackInfo.CatInfo.PriceType)
+        if (handler is null)
         {
-            case QuestionPackPriceType.Fixed:
-                max = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                min = question.QuestionPackInfo.CatInfo.FixedPrice.Value;
-                step = 0;
-                break;
-            case QuestionPackPriceType.Select:
-                max = question.QuestionPackInfo.CatInfo.SelectPrice.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPrice.From;
-                step = 1;
-                break;
-            case QuestionPackPriceType.MaxOrMin:
-                max = session.CurrentRound.Themes[question.ThemeNumber].Prices.Max(x => x.Price);
-                min = session.CurrentRound.Themes[question.ThemeNumber].Prices.Min(x => x.Price);
-                step = 0;
-                break;
-            case QuestionPackPriceType.SelectWithStep:
-                max = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.To;
-                min = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.From;
-                step = question.QuestionPackInfo.CatInfo.SelectPriceWithStep.Step.Value;
-                break;
+            throw new Exception($"Не найден хендлер типа '{session.CurrentQuestion.QuestionPackInfo!.Type}'");
         }
 
-        await _callbackService.NeedSetQuestionPrice(forwardPlayer.SessionId, forwardPlayer, min, max, step);
-
-        await _callbackService.QuestionForwarded(forwardPlayer.SessionId, forwardPlayer);
-        
-        session.ChangeRespondingPlayer(forwardPlayer);
+        await handler.HandleForwardQuestion(session, forwardPlayer);
     }
 
     private (Player Player, QuestionInfo QuestionInfo, Session Session) ValidateAnswerData(string connectionId)

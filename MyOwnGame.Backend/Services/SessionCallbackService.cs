@@ -183,4 +183,9 @@ public class SessionCallbackService
         await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.QuestionForwarded.ToString(), PlayerDto.Create(forwardedPlayer));
 
     }
+    
+    public async Task SessionClosed(long sessionId)
+    {
+        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.SessionClosed.ToString());
+    }
 }

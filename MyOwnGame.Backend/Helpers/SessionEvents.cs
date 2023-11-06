@@ -128,5 +128,10 @@ public enum SessionEvents
     /// <summary>
     /// Вопрос перенаправлен ебать
     /// </summary>
-    QuestionForwarded
+    QuestionForwarded,
+    
+    /// <summary>
+    /// Сессия была завершена.
+    /// </summary>
+    SessionClosed
 }

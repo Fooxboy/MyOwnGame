@@ -17,6 +17,8 @@ public class SessionDto
     public PlayerDto? SelectQuestionPlayer { get; set; }
     
     public SessionState State { get;  set; }
+    
+    public List<PlayerDto> FinalAnswers { get; set; }
 
     public static SessionDto Create(Session session)
     {
@@ -29,7 +31,8 @@ public class SessionDto
             SelectQuestionPlayer = PlayerDto.Create(session.SelectQuestionPlayer),
             GameInfo = session.GameInfo,
             State = session.State, 
-            CreatedAt = session.CreatedAt
+            CreatedAt = session.CreatedAt,
+            FinalAnswers = session.FinalAnswers.Select(x=> PlayerDto.Create(x.Player)).ToList(),
         };
     }
     
