@@ -34,7 +34,7 @@ body {
 	--textfield: white;
 	--textfield-border: 1.5px solid rgb(26, 108, 254);
 
-	background: url("resources/background.jpg");
+	background: var(--background-image);
 	background-size: cover;
 	backdrop-filter: blur(20px);
 }

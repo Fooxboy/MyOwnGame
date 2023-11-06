@@ -7,6 +7,8 @@ let userId = 0;
 let userImage = "";
 let userName = "";
 
+
+
 function chooseAvatar(){
 	var input = document.createElement('input');
 	input.type = 'file';
@@ -23,6 +25,8 @@ function chooseAvatar(){
 }
 
 function loadAccountFromCookie(){
+	document.body.style.setProperty("--background-image", `url(${address}/content/background.jpg)`);
+
 	userId = getCookie("user-id");
 	userImage = getCookie("user-image");
 	userName = getCookie("user-name");
@@ -127,6 +131,8 @@ async function connectToSession(sessionId){
 		connection.on("ScoreChanged", (player, score) => updateScore(player, score));
 		connection.on("FinalThemeRemoved", (themes) => finalThemeRemoved(themes));
 		connection.on("PlayerTriedAnswer", (player) => triedToAnswer(player));
+		connection.on("FinalQuestionResponsed", (player) => finalQuestionResponsed(player));
+		connection.on("UserFinalAnswer", (player, answer) => showUserAnswer(player, answer));
 
 		session["id"] = sessionId;
 		setCookie("last-session", sessionId);

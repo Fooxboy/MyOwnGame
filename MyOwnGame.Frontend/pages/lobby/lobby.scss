@@ -153,6 +153,7 @@
 #field {
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	flex: 1;
 	margin: 30px;
 	height: 1px;
@@ -160,6 +161,7 @@
 
 #answer-text {
 	display: none;
+    width: 100%;
 	color: white;
 	font-weight: 600;
 	text-align: center;

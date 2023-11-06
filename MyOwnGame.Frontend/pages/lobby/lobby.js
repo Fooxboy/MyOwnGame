@@ -124,8 +124,6 @@ function setRound(roundInfo){
 			themePanel.appendChild(button);
 		});
 	});
-
-	console.log(roundInfo);
 }
 
 function setPlayerSelecting(player){
@@ -141,15 +139,6 @@ function setPlayerAnswer(player){
 }
 
 function showQuestion(question, type, time, position){
-	console.log("Showing question:");
-	console.log(question);
-	console.log("With type:");
-	console.log(type);
-	console.log("With time:");
-	console.log(time);
-	console.log("At position:");
-	console.log(position);
-
 	const answerButton = document.querySelector("#answer-button");
 	const priceElement = document.querySelector(`#theme-${position.themeNumber} #price-${position.questionNumber}`);
 	priceElement.classList.add("selected");
@@ -170,11 +159,10 @@ function canAnswer(can){
 	document.querySelector("#answer-button").innerHTML = "Ответить";
 
 	const player = getCachedPlayerById(userId);
-	console.log(player);
 
 	const answerText = document.querySelector("#answer-textfield");
 	const answerPricePanel = document.querySelector("#answer-price-panel");
-	const isFinalAndCanAnswer = !isAdmin && session.currentRound.isFinal;
+	const isFinalAndCanAnswer = !isAdmin && can && session.currentRound.isFinal;
 
 	answerText.style.display = isFinalAndCanAnswer ? "block" : "none";
 	answerPricePanel.style.display = isFinalAndCanAnswer ? "block" : "none";
@@ -219,6 +207,18 @@ function triedToAnswer(player){
 	setTimeout(() => {
 		playerElement.classList.remove("tried-answer");
 	}, 300);
+}
+
+function finalQuestionResponsed(player){
+	updatePlayers();
+}
+
+function showUserAnswer(player, answer){
+	showContent({
+		type: "answer",
+		text: answer.answer,
+		playerName: player.name
+	});
 }
 
 /*
@@ -269,15 +269,24 @@ function updatePlayers() {
 				}
 
 				if(session.respondingPlayer && 
+					(session.currentRound && !session.currentRound.isFinal) &&
 					player.id == session.respondingPlayer.id)
 					setPlayerStatus(player.id, "отвечает", "rgba(240, 240, 100, 1)", "rgba(120, 120, 0, 1)");
 				
 				else if(player.isDisconnected)
 					setPlayerStatus(player.id, "отключен", "rgba(100, 100, 100, 1)", "rgba(200, 200, 200, 1)");
-				
-				else if(session.selectQuestionPlayer && 
+
+				else if(
+					(session.currentRound && session.currentRound.isFinal) &&
+					session.finalAnswers.filter(p => p.id == player.id).length > 0
+				){
+					setPlayerStatus(player.id, "ответил", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
+
+				}else if(
+					(session.currentRound && !session.currentRound.isFinal) &&
 					session.state == 4 &&
-					player.id == session.selectQuestionPlayer.id) {
+					(session.selectQuestionPlayer && session.selectQuestionPlayer.id == player.id) 
+				) {
 					setPlayerStatus(player.id, "выбирает", "rgba(100, 200, 100, 1)", "rgba(0, 90, 0, 1)");
 					canChooseAnswer = player.id == userId;
 					document.body.classList.toggle("can-choose-price", canChooseAnswer);
@@ -312,7 +321,14 @@ function requestPrice(theme, price){
 }
 
 function requestAnswer(){
-	connection.invoke("ReadyToAnswer", new Date().toISOString());
+	if(session.currentRound.isFinal){
+		connection.invoke("SendFinalAnswer", 
+			document.querySelector("#answer-textfield").value,
+			parseInt(document.querySelector("#answer-price").value)
+		);
+		canAnswer(false);
+	}else
+		connection.invoke("ReadyToAnswer", new Date().toISOString());
 }
 
 function requestRemoveTheme(themeId){
@@ -353,14 +369,13 @@ function showContent(content, callback) {
 	}
 
 	questions.style.display = "none";
-	textQuestion.style.display = content.type == 1 ? "flex" : "none";
+	textQuestion.style.display = (content.type == 1 || content.type == "answer") ? "flex" : "none";
 	musicQuestion.style.display = content.type == 2 ? "flex" : "none";
 	imageQuestion.style.display = content.type == 3 ? "flex" : "none";
 
 	if(content.type == 1){
 		textQuestion.querySelector(`#text-content`).textContent = content.text;
 		setTimeout(() => callback(), content.text.length * 200);
-		
 	}
 	if(content.type == 2){
 		window.music = new Audio(`${address}/content/${session.id}/${content.url}`);
@@ -377,6 +392,10 @@ function showContent(content, callback) {
 		setTimeout(() => callback(), 3000);
 		if(content.text != null)
 			setAnswerText(content.text);
+	}
+	if(content.type == "answer"){
+		textQuestion.querySelector(`#text-content`).textContent = content.text;
+		setAnswerText(content.playerName);
 	}
 }
 
