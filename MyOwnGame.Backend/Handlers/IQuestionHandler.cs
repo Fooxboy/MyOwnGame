@@ -1,6 +1,7 @@
 ﻿using MyOwnGame.Backend.Domain;
 using MyOwnGame.Backend.Models;
 using MyOwnGame.Backend.Models.QuestionsAdditionalInfo;
+using MyOwnGame.Backend.Services;
 
 namespace MyOwnGame.Backend.Handlers;
 
@@ -17,4 +18,6 @@ public interface IQuestionHandler
     public Task HandleSetQuestionPrice(Session session, Player player, int price);
 
     public Task HandleForwardQuestion(Session session, Player forwardPlayer);
+
+    public void SetCurrentSessionService(SessionService service);
 }

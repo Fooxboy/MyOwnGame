@@ -395,7 +395,8 @@ public class SessionService
         {
             throw new Exception($"Не найден хендлер типа '{answerData.QuestionInfo.QuestionPackInfo.Type}'");
         }
-
+        handler.SetCurrentSessionService(this);
+        
         await handler.HandleAcceptQuestion(session, player);
     }
 
@@ -411,6 +412,7 @@ public class SessionService
         {
             throw new Exception($"Не найден хендлер типа '{answerData.QuestionInfo.QuestionPackInfo.Type}'");
         }
+        handler.SetCurrentSessionService(this);
 
         await handler.HandleRejectAnswer(session, player);
     }
@@ -635,23 +637,20 @@ public class SessionService
         session.AddFinalAnswer(player, message, price);
 
         await _callbackService.FinalQuestionResponsed(player.SessionId, player);
+
+        if (session.Players.Count(x=> x is { IsAdmin: false, IsDisconnected: false }) >= session.FinalAnswers.Count)
+        {
+            var firstPlayer = session.FinalAnswers.FirstOrDefault().Player;
+            
+            session.ChangeRespondingPlayer(firstPlayer);
+
+            await ShowFinalAnswer(firstPlayer.Id, firstPlayer.SessionId);
+        }
     }
 
-    public async Task ShowFinalAnswer(int playerId, string connectionId)
+    public async Task ShowFinalAnswer(long playerId, long sessionId)
     {
-        var adminUser = _sessionsManager.GetPlayer(connectionId);
-
-        if (adminUser is null)
-        {
-            throw new Exception("Админ не найден");
-        }
-
-        if (!adminUser.IsAdmin)
-        {
-            throw new Exception("Ты не админ уйди отсюдава");
-        }
-
-        var player = _sessionsManager.GetPlayer(adminUser.SessionId, playerId);
+        var player = _sessionsManager.GetPlayer(sessionId, playerId);
 
         if (player is null)
         {
@@ -660,7 +659,6 @@ public class SessionService
 
         var session = _sessionsManager.GetSessionById(player.SessionId);
         
-
         if (session is null)
         {
             throw new Exception("Не найдена сессия у игрока, вопрос котого надо показать");

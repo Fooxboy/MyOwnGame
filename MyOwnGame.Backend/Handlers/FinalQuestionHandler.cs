@@ -31,8 +31,21 @@ public class FinalQuestionHandler : BaseQuestionHandler
         player.AddScore(price);
             
         await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+        
+        await _callbackService.AcceptAnswer(player.SessionId, player, player.Score, null);
 
-        await PostHandleAcceptQuestion(session, player);
+        if (session.FinalAnswers.Count > 0)
+        {
+            var finalAnswer = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id);
+
+            session.FinalAnswers.Remove(finalAnswer);
+
+            var nextPlayer = session.FinalAnswers.FirstOrDefault().Player;
+
+            session.ChangeRespondingPlayer(nextPlayer);
+
+            await sessionService.ShowFinalAnswer(nextPlayer.Id, nextPlayer.SessionId);
+        }
     }
 
     public override async Task HandleRejectAnswer(Session session, Player player)
@@ -40,8 +53,19 @@ public class FinalQuestionHandler : BaseQuestionHandler
         var price = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id)!.Price;
             
         player.RemoveScore(price);
-
+        
         await _callbackService.ScoreChanged(player.SessionId, player, player.Score);
+
+        if (session.FinalAnswers.Count > 0)
+        {
+            var finalAnswer = session.FinalAnswers.FirstOrDefault(x => x.Player.Id == player.Id);
+
+            session.FinalAnswers.Remove(finalAnswer);
+
+            var nextPlayer = session.FinalAnswers.FirstOrDefault().Player;
+
+            await sessionService.ShowFinalAnswer(nextPlayer.Id, nextPlayer.SessionId);
+        }
     }
 
     public override Task HandleSetQuestionPrice(Session session, Player player, int price)

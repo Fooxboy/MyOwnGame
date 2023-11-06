@@ -10,6 +10,7 @@ public abstract class BaseQuestionHandler : IQuestionHandler
 {
     private readonly QuestionParser _questionParser;
     private readonly SessionCallbackService _callbackService;
+    protected SessionService sessionService;
 
     protected BaseQuestionHandler(QuestionParser questionParser, SessionCallbackService callbackService)
     {
@@ -67,6 +68,11 @@ public abstract class BaseQuestionHandler : IQuestionHandler
     public virtual Task HandleForwardQuestion(Session session, Player forwardPlayer)
     {
         return Task.CompletedTask;
+    }
+
+    public void SetCurrentSessionService(SessionService service)
+    {
+        sessionService = service;
     }
 
     protected async Task PostHandleSetQuestionPrice(Session session, Player player, int price)

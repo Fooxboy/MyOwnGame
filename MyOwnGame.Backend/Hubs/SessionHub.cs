@@ -282,7 +282,7 @@ public class SessionHub : Hub
         {
             _logger.LogInformation("Показ финального вопроса всем пользователям");
 
-            await _sessionService.ShowFinalAnswer(playerId, Context.ConnectionId);
+            //await _sessionService.ShowFinalAnswer(playerId, Context.ConnectionId);
         }
         catch (Exception ex)
         {
