@@ -612,7 +612,11 @@ public class SessionService
             var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
 
             var questionInfo = _questionParser.Parse(question);
-            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, new QuestionPackInfo(), 0, 0, 0);
+            questionInfo.QuestionPackInfo = new QuestionPackInfo() { Type = QuestionPackType.Final };
+            
+            session.SelectCurrentQuestion(questionInfo);
+            
+            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, questionInfo.QuestionPackInfo, 0, 0, 0);
             await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
             await _callbackService.PlayerCanAnswer(admin.SessionId);
         }
