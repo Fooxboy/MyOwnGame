@@ -19,12 +19,18 @@ namespace MyOwnGame.Backend
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            /*
 #if DEBUG
             builder.WebHost.UseKestrel(serverOptions =>
             {
-                serverOptions.ListenAnyIP(3000);
+                serverOptions.ListenAnyIP(3000, options =>
+                {
+                    options.UseHttps()
+                });
             });
 #endif
+
+*/
             
 #if RELEASE
             builder.WebHost.UseKestrel(serverOptions =>
@@ -119,7 +125,13 @@ namespace MyOwnGame.Backend
 
             backgroundTaskRunner.Run();
 
+            #if DEBUG
+            app.Run("https://localhost:3000");
+            #endif
+            
+            #if RELEASE
             app.Run();
+            #endif
         }
     }
 }

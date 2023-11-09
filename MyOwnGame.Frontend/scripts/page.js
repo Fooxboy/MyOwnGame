@@ -1,4 +1,4 @@
-const address = "https://fooxboy.ru:3000";
+let address = "https://fooxboy.ru:3000";
 let connection;
 let session;
 
