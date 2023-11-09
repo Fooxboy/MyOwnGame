@@ -247,12 +247,39 @@ public class SessionService
         {
             throw new Exception("Не найдена сессия");
         }
+
+        if (roundInfo.RoundInfo.IsFinal)
+        {
+            if (roundInfo.RoundInfo.Themes.Count == 1)
+            {
+                await SelectFinalTheme(session, player);
+            }
+        }
         
         session.ChangeStateToTable();
         
         await _callbackService.RoundChanged(player.SessionId, roundInfo.RoundInfo);
 
         await _callbackService.ChangeSelectQuestionPlayer(player.SessionId, roundInfo.QuestionPlayer);
+    }
+
+    private async Task SelectFinalTheme(Session session, Player player)
+    {
+        var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
+
+        var question =
+            currentRound.Themes.Theme.FirstOrDefault(x => session.CurrentRound.Themes.FirstOrDefault().Name == x.Name).Questions.Question.FirstOrDefault();
+
+        var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
+
+        var questionInfo = _questionParser.Parse(question);
+        questionInfo.QuestionPackInfo = new QuestionPackInfo() { Type = QuestionPackType.Final };
+            
+        session.SelectCurrentQuestion(questionInfo);
+            
+        await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, questionInfo.QuestionPackInfo, 0, 0, 0);
+        await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
+        await _callbackService.PlayerCanAnswer(admin.SessionId);
     }
 
     public long Pause(string connectionId)
@@ -604,21 +631,7 @@ public class SessionService
         
         if (session.CurrentRound.Themes.Count == 1)
         {
-            var currentRound = session.Package.Rounds.Round[session.CurrentRound.Number];
-
-            var question =
-                currentRound.Themes.Theme.FirstOrDefault(x => session.CurrentRound.Themes.FirstOrDefault().Name == x.Name).Questions.Question.FirstOrDefault();
-
-            var admin = session.Players.FirstOrDefault(x => x.IsAdmin);
-
-            var questionInfo = _questionParser.Parse(question);
-            questionInfo.QuestionPackInfo = new QuestionPackInfo() { Type = QuestionPackType.Final };
-            
-            session.SelectCurrentQuestion(questionInfo);
-            
-            await _callbackService.QuestionSelected(player.SessionId, questionInfo.Questions, questionInfo.QuestionPackInfo, 0, 0, 0);
-            await _callbackService.QuestionSelectedAdmin(admin.ConnectionId, questionInfo.Answer);
-            await _callbackService.PlayerCanAnswer(admin.SessionId);
+            await SelectFinalTheme(session, player);
         }
     }
 
