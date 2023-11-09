@@ -768,7 +768,7 @@ public class SessionService
 
         if (session.CurrentRound.IsFinal)
         {
-            return (player, null, session);
+            return (player, session.CurrentQuestion, session);
         }
         
         var selectedQuestion = session.CurrentQuestion;
