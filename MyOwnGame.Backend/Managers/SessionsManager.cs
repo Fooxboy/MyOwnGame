@@ -150,6 +150,11 @@ public class SessionsManager
     
     public Player? GetPlayer(string connectionId)
     {
+        if (connectionId.Contains("admin"))
+        {
+            return GetAdminPlayer(connectionId);
+        }
+        
         var session = GetSessionByConnection(connectionId);
 
         if (session is null)
@@ -158,6 +163,19 @@ public class SessionsManager
         }
 
         return session.Players.FirstOrDefault(p => p.ConnectionId == connectionId);
+    }
+
+    private Player? GetAdminPlayer(string connectionId)
+    {
+        var sessionId = int.Parse(connectionId.Split("_").LastOrDefault());
+
+        var session = GetSessionById(sessionId);
+
+        var player = Player.Create(new User() { AvatarImage = "admin.jpg", Id = 5, Name = "admin" }, true, sessionId);
+
+        player.ConnectionId = connectionId;
+
+        return player;
     }
 
     public (RoundInfo? RoundInfo, Player QuestionPlayer) ChangeRound(int roundPosition, long sessionId)
