@@ -35,6 +35,8 @@ public class SessionsManager
     public Session? GetSessionById(long id)
     {
         return !_sessions.TryGetValue(id, out var session) ? null : session;
+        
+        
     }
     
     public Session? GetSessionByConnection(string connectionId)
