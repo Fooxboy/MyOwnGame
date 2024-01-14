@@ -38,8 +38,12 @@ public class SiqPackageParser
     
     public Package? ParsePackage(string pathToXml)
     {
-        var fileStringContent = File.ReadAllText(pathToXml).Replace("http://vladimirkhil.com/ygpackage3.0.xsd", string.Empty)
-            .Replace("http://ur-quan1986.narod.ru/ygpackage3.0.xsd", string.Empty);
+        var fileStringContent = File.ReadAllText(pathToXml)
+            .Replace("http://vladimirkhil.com/ygpackage3.0.xsd", string.Empty)
+            .Replace("https://github.com/VladimirKhil/SI/blob/master/assets/ygpackage3.0.xsd", string.Empty)
+            .Replace("http://ur-quan1986.narod.ru/ygpackage3.0.xsd", string.Empty)
+            .Replace("http://vladimirkhil.com/siq_5.xsd", string.Empty)
+            .Replace("https://github.com/VladimirKhil/SI/blob/master/assets/siq_5.xsd", string.Empty);
         
         var serializer = new XmlSerializer(typeof(Package));
 
