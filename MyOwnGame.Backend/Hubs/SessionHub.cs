@@ -260,13 +260,28 @@ public class SessionHub : Hub
         }
     }
 
+    public async Task SetFinalPrice(int price)
+    {
+        try
+        {
+            _logger.LogInformation($"Установка цены для финала в размере:  {price}");
+            
+            await _sessionService.SendFinalPrice(price, Context.ConnectionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            throw new HubException(ex.Message, ex);
+        }
+    }
+
     public async Task SendFinalAnswer(string text, int price)
     {
         try
         {
             _logger.LogInformation($"Отправка финального ответа от пользователя  '{Context.ConnectionId}' '{text}'");
 
-            await _sessionService.SendFinalAnswer(text, price, Context.ConnectionId);
+            await _sessionService.SendFinalAnswer(text, Context.ConnectionId);
             
         }
         catch (Exception ex)

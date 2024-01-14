@@ -146,6 +146,11 @@ public class SessionCallbackService
             PlayerDto.Create(finalAnswer.Player), finalAnswer);
     }
 
+    public async Task NeedSetFinalPrice(long sessionId)
+    {
+        await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(SessionEvents.NeedSetFinalPrice.ToString());
+    }
+
     public async Task PlayerOffline(long sessionId, Player player)
     {
         await _hubContext.Clients.Group(sessionId.ToString())

@@ -2,18 +2,11 @@
 
 namespace MyOwnGame.Backend.BackgroundTasks;
 
-public class BackgroundTaskRunner
+public class BackgroundTaskRunner(IEnumerable<IBackgroundTask> backgroundTasks)
 {
-    private readonly IEnumerable<IBackgroundTask> _backgroundTasks;
-    
-    public BackgroundTaskRunner(IEnumerable<IBackgroundTask> backgroundTasks)
-    {
-        _backgroundTasks = backgroundTasks;
-    }
-
     public void Run()
     {
-        foreach (var backgroundTask in _backgroundTasks)
+        foreach (var backgroundTask in backgroundTasks)
         {
             var thread = new Thread(async () =>
             {

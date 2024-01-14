@@ -631,11 +631,40 @@ public class SessionService
         
         if (session.CurrentRound.Themes.Count == 1)
         {
+            await _callbackService.NeedSetFinalPrice(player.SessionId);
+        }
+    }
+
+    public async Task SendFinalPrice(int price, string connectionId)
+    {
+        var session = _sessionsManager.GetSessionByConnection(connectionId);
+
+        if (session is null)
+        {
+            throw new Exception("Не найдена сессия :(");
+        }
+
+        var player = _sessionsManager.GetPlayer(connectionId);
+        
+        if (player is null)
+        {
+            throw new Exception("Не найден игрок, который отправил ответ");
+        }
+
+        if (session.FinalPrices.Any(x => x.Player.Id == player.Id))
+        {
+            throw new Exception("Вы уже установили сумму на финал");
+        }
+        
+        session.AddFinalPrice(player, price);
+
+        if (session.Players.Count(x => x is { IsAdmin: false, IsDisconnected: false }) >= session.FinalPrices.Count)
+        {
             await SelectFinalTheme(session, player);
         }
     }
 
-    public async Task SendFinalAnswer(string message, int price, string connectionId)
+    public async Task SendFinalAnswer(string message, string connectionId)
     {
         var session = _sessionsManager.GetSessionByConnection(connectionId);
 
@@ -651,7 +680,7 @@ public class SessionService
             throw new Exception("Не найден игрок, который отправил ответ");
         }
         
-        session.AddFinalAnswer(player, message, price);
+        session.AddFinalAnswer(player, message);
 
         await _callbackService.FinalQuestionResponsed(player.SessionId, player);
 

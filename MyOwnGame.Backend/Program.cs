@@ -122,7 +122,7 @@ namespace MyOwnGame.Backend
             app.UseCors("any");
 
             var backgroundTaskRunner = app.Services.GetRequiredService<BackgroundTaskRunner>();
-
+            
             backgroundTaskRunner.Run();
 
             #if DEBUG

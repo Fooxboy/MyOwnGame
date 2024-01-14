@@ -133,5 +133,10 @@ public enum SessionEvents
     /// <summary>
     /// Сессия была завершена.
     /// </summary>
-    SessionClosed
+    SessionClosed,
+    
+    /// <summary>
+    /// Необходимо установить цену для игры в финале
+    /// </summary>
+    NeedSetFinalPrice,
 }

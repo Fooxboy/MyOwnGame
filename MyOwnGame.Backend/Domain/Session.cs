@@ -45,6 +45,9 @@ public class Session
     public string PackageHash { get; private set; }
     
     public List<FinalAnswer> FinalAnswers { get; private set; }
+
+    public List<FinalPrice> FinalPrices { get; private set; }
+    
     
     public SessionSettings Settings { get; private set; }
     
@@ -69,6 +72,7 @@ public class Session
         };
 
         FinalAnswers = new List<FinalAnswer>();
+        FinalPrices = new List<FinalPrice>();
 
         Settings = settings ?? new SessionSettings() { TimeToReadyAnswer = 5 };
     }
@@ -220,8 +224,26 @@ public class Session
         CurrentRound.Themes.Remove(CurrentRound.Themes[position]);
     }
 
-    public void AddFinalAnswer(Player player, string answer, int price)
+    public void AddFinalAnswer(Player player, string answer)
     {
-        FinalAnswers.Add(new FinalAnswer(){ Player = player, Answer = answer, Price = price});
+
+        var price = FinalPrices.FirstOrDefault(x => x.Player.Id == player.Id)?.Price;
+
+        if (price is null)
+        {
+            throw new Exception("Пользователь не указал количество баллов на какое он играет в финале");
+        }
+        
+        FinalAnswers.Add(new FinalAnswer(){ Player = player, Answer = answer, Price = price.Value});
+    }
+
+    public void AddFinalPrice(Player player, int price)
+    {
+        if (price < 1 || price > player.Score)
+        {
+            throw new Exception("Невозможно установить количество за пределами доступного");
+        }
+        
+        FinalPrices.Add(new FinalPrice(){ Player = player, Price = price});
     }
 }
